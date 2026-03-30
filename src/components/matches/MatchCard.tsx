@@ -1,0 +1,113 @@
+import { MapPin } from 'lucide-react'
+import { TeamFlag } from '../ui/TeamFlag'
+import { formatMatchTime, formatMatchDay } from '../../utils/datetime'
+import type { MatchWithRelations } from '../../types/match'
+
+interface Props {
+  match: MatchWithRelations
+  onClick?: () => void
+}
+
+export function MatchCard({ match, onClick }: Props) {
+  const isFinished = match.status === 'finished'
+  const isLive = match.status === 'live'
+  const hasScore = match.home_score_90 !== null && match.away_score_90 !== null
+
+  const homeWon = isFinished && match.winner_team_id === match.home_team?.id
+  const awayWon = isFinished && match.winner_team_id === match.away_team?.id
+
+  return (
+    <div
+      className={`card p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-primary/40' : ''}`}
+      onClick={onClick}
+    >
+      {/* Encabezado: fase / grupo + fecha/hora */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {match.group && (
+            <span className="badge-primary text-[10px] font-semibold uppercase tracking-wide">
+              Grupo {match.group.name}
+            </span>
+          )}
+          {!match.group && (
+            <span className="badge bg-accent/20 text-accent text-[10px] font-semibold uppercase tracking-wide">
+              {match.phase.name}
+            </span>
+          )}
+          <span className="text-text-muted text-xs">#{match.match_number}</span>
+        </div>
+
+        {isLive ? (
+          <span className="flex items-center gap-1 text-error text-xs font-semibold animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-error inline-block" />
+            EN VIVO
+          </span>
+        ) : isFinished ? (
+          <span className="text-text-muted text-xs">Finalizado</span>
+        ) : (
+          <span className="text-text-secondary text-xs">
+            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)} ET
+          </span>
+        )}
+      </div>
+
+      {/* Equipos y marcador */}
+      <div className="flex items-center gap-3">
+        {/* Local */}
+        <div className="flex-1">
+          <TeamFlag
+            team={match.home_team}
+            slotLabel={match.home_slot_label}
+            size="md"
+            align="left"
+          />
+        </div>
+
+        {/* Marcador / VS */}
+        <div className="flex-shrink-0 w-20 text-center">
+          {hasScore ? (
+            <div className="flex items-center justify-center gap-1.5">
+              <span className={`text-2xl font-bold tabular-nums ${homeWon ? 'text-primary' : 'text-text-primary'}`}>
+                {match.home_score_90}
+              </span>
+              <span className="text-text-muted text-lg">:</span>
+              <span className={`text-2xl font-bold tabular-nums ${awayWon ? 'text-primary' : 'text-text-primary'}`}>
+                {match.away_score_90}
+              </span>
+            </div>
+          ) : (
+            <span className="text-text-muted text-xl font-light">vs</span>
+          )}
+
+          {/* Indicadores de ET y penales */}
+          {match.home_score_et !== null && (
+            <div className="text-[10px] text-text-muted mt-0.5">
+              ET {match.home_score_et}:{match.away_score_et}
+              {match.home_score_pk !== null && (
+                <span className="ml-1">· P {match.home_score_pk}:{match.away_score_pk}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Visitante */}
+        <div className="flex-1 flex justify-end">
+          <TeamFlag
+            team={match.away_team}
+            slotLabel={match.away_slot_label}
+            size="md"
+            align="right"
+          />
+        </div>
+      </div>
+
+      {/* Estadio */}
+      <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+        <MapPin size={11} className="text-text-muted flex-shrink-0" />
+        <span className="text-[11px] text-text-muted truncate">
+          {match.stadium.name} · {match.stadium.city}
+        </span>
+      </div>
+    </div>
+  )
+}

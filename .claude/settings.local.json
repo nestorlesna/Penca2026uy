@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.fifa.com)",
+      "WebSearch",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.mlssoccer.com)",
+      "WebFetch(domain:www.skysports.com)",
+      "WebFetch(domain:worldcupwiki.com)",
+      "Bash(npm create:*)",
+      "Bash(npx create-vite@latest . --template react-ts)",
+      "Bash(npx create-vite@latest temp_init --template react-ts)",
+      "Bash(cp -r temp_init/. .)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:sports.yahoo.com)",
+      "WebFetch(domain:www.nbcsports.com)",
+      "WebFetch(domain:www.cbssports.com)",
+      "Bash(wc:*)"
+    ]
+  }
+}
