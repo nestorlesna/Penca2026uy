@@ -15,6 +15,10 @@ import { ResultadosPage } from './pages/admin/ResultadosPage'
 import { ConfigPage } from './pages/admin/ConfigPage'
 import { GrupoDetailPage } from './pages/GrupoDetailPage'
 import { EquipoPage } from './pages/EquipoPage'
+import { AyudaPage } from './pages/AyudaPage'
+import { EquiposAdminPage } from './pages/admin/EquiposAdminPage'
+import { PartidosAdminPage } from './pages/admin/PartidosAdminPage'
+import { AuditoriaPage } from './pages/admin/AuditoriaPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +41,14 @@ export default function App() {
             <Route path="mis-predicciones"  element={<MisPrediccionesPage />} />
             <Route path="perfil"            element={<PerfilPage />} />
             <Route path="auth"              element={<AuthPage />} />
+            <Route path="ayuda"             element={<AyudaPage />} />
             {/* Admin */}
             <Route path="admin/usuarios"    element={<UsuariosPage />} />
             <Route path="admin/resultados"  element={<ResultadosPage />} />
             <Route path="admin/config"      element={<ConfigPage />} />
+            <Route path="admin/equipos"     element={<EquiposAdminPage />} />
+            <Route path="admin/auditoria"   element={<AuditoriaPage />} />
+            <Route path="admin/partidos"    element={<PartidosAdminPage />} />
             <Route path="*"                 element={<NotFoundPage />} />
           </Route>
         </Routes>

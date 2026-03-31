@@ -2,6 +2,35 @@ import { supabase } from '../lib/supabase'
 import type { Team } from '../types'
 import type { MatchWithRelations } from '../types/match'
 
+export async function fetchAllTeams(): Promise<TeamWithGroup[]> {
+  const { data, error } = await supabase
+    .from('teams')
+    .select('*, group:groups(id, name, order)')
+    .order('group_id')
+    .order('group_position')
+  if (error) throw error
+  return (data ?? []) as unknown as TeamWithGroup[]
+}
+
+export async function updateTeam(
+  teamId: string,
+  data: Partial<Pick<Team, 'name' | 'abbreviation' | 'flag_url' | 'is_confirmed' | 'placeholder_name'>>
+) {
+  const { error } = await supabase.from('teams').update(data).eq('id', teamId)
+  if (error) throw error
+}
+
+export async function uploadTeamFlag(teamId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()
+  const path = `${teamId}/flag.${ext}`
+  const { error } = await supabase.storage
+    .from('flags')
+    .upload(path, file, { upsert: true })
+  if (error) throw error
+  const { data } = supabase.storage.from('flags').getPublicUrl(path)
+  return `${data.publicUrl}?t=${Date.now()}`
+}
+
 const MATCH_SELECT = `
   id, match_number, match_datetime, status,
   home_slot_label, away_slot_label,

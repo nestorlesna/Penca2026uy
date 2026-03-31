@@ -116,7 +116,7 @@ export function ResultadosPage() {
                   </div>
                 </div>
                 <p className="text-[11px] text-text-muted mt-1">
-                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)} ET
+                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
                 </p>
               </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trophy, Menu, X, ShieldCheck } from 'lucide-react'
+import { Trophy, Menu, X, ShieldCheck, HelpCircle } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -38,8 +38,8 @@ export function Header() {
           {/* Logo */}
           <Link to="/fixture" className="flex items-center gap-2 font-bold text-text-primary">
             <Trophy className="text-accent" size={20} />
-            <span className="text-sm font-semibold hidden xs:block">Penca Mundial 2026</span>
-            <span className="text-sm font-semibold xs:hidden">Penca 2026</span>
+            <span className="text-sm font-semibold hidden xs:block">PencaLes 2026</span>
+            <span className="text-sm font-semibold xs:hidden">PencaLes 2026</span>
           </Link>
 
           {/* Desktop nav */}
@@ -48,6 +48,9 @@ export function Header() {
             <DeskNavLink to="/grupos">Grupos</DeskNavLink>
             <DeskNavLink to="/ranking">Ranking</DeskNavLink>
             {user && <DeskNavLink to="/mis-predicciones">Mis apuestas</DeskNavLink>}
+            <DeskNavLink to="/ayuda">
+              <HelpCircle size={14} className="inline mr-1" />Ayuda
+            </DeskNavLink>
             {isAdmin && (
               <DeskNavLink to="/admin/usuarios">
                 <ShieldCheck size={14} className="inline mr-1" />Admin
@@ -91,6 +94,9 @@ export function Header() {
                         </div>
                         <Link to="/admin/usuarios" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Usuarios</Link>
                         <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
+                        <Link to="/admin/partidos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos</Link>
+                        <Link to="/admin/equipos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Equipos</Link>
+                        <Link to="/admin/auditoria" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Auditoría</Link>
                         <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
                       </>
                     )}
@@ -129,8 +135,12 @@ export function Header() {
             <MobileNavLink to="/ranking">Ranking</MobileNavLink>
             {user && <MobileNavLink to="/mis-predicciones">Mis apuestas</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
+            <MobileNavLink to="/ayuda">Ayuda · Puntaje</MobileNavLink>
             {isAdmin && <MobileNavLink to="/admin/usuarios">Admin · Usuarios</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/resultados">Admin · Resultados</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/partidos">Admin · Partidos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/equipos">Admin · Equipos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}
           </nav>

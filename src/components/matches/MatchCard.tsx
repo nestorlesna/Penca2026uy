@@ -46,7 +46,7 @@ export function MatchCard({ match, onClick }: Props) {
           <span className="text-text-muted text-xs">Finalizado</span>
         ) : (
           <span className="text-text-secondary text-xs">
-            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)} ET
+            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
           </span>
         )}
       </div>

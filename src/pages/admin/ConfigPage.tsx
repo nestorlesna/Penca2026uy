@@ -13,12 +13,12 @@ type ConfigRow = {
 }
 
 const SCORE_KEYS = [
-  { key: 'pts_exact_score', label: 'Resultado exacto' },
-  { key: 'pts_correct_winner', label: 'Ganador correcto' },
-  { key: 'pts_correct_goals_home', label: 'Goles local correctos' },
-  { key: 'pts_correct_goals_away', label: 'Goles visitante correctos' },
-  { key: 'pts_correct_et', label: 'Resultado ET exacto' },
-  { key: 'pts_correct_pk_winner', label: 'Ganador penales correcto' },
+  { key: 'exact_score_points',         label: 'Resultado exacto' },
+  { key: 'correct_winner_points',       label: 'Ganador correcto' },
+  { key: 'correct_draw_points',         label: 'Empate correcto' },
+  { key: 'knockout_exact_score_bonus',  label: 'Bonus resultado exacto (eliminatorias)' },
+  { key: 'correct_et_result_points',    label: 'Resultado ET exacto' },
+  { key: 'correct_pk_winner_points',    label: 'Ganador penales correcto' },
 ]
 
 export function ConfigPage() {

@@ -50,8 +50,8 @@ function UsuariosContent() {
         <div>
           <h1 className="text-xl font-bold text-text-primary">Usuarios</h1>
           {pending > 0 && (
-            <p className="text-xs text-accent mt-0.5">
-              {pending} usuario{pending > 1 ? 's' : ''} pendiente{pending > 1 ? 's' : ''} de aprobación
+            <p className="text-xs text-error mt-0.5">
+              {pending} usuario{pending > 1 ? 's' : ''} inactivo{pending > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -138,7 +138,7 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
       <div className="flex items-center gap-1">
         {profile.is_active
           ? <span className="badge-primary text-[10px] hidden sm:inline-flex">Activo</span>
-          : <span className="badge bg-warning/20 text-warning text-[10px] hidden sm:inline-flex">Pendiente</span>
+          : <span className="badge bg-error/20 text-error text-[10px] hidden sm:inline-flex">Inactivo</span>
         }
       </div>
 
@@ -147,7 +147,7 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
         <div className="flex items-center gap-1">
           <button
             onClick={() => onToggleActive(!profile.is_active)}
-            title={profile.is_active ? 'Desactivar' : 'Activar'}
+            title={profile.is_active ? 'Inactivar usuario' : 'Activar usuario'}
             className={`p-2 rounded-lg transition-colors ${
               profile.is_active
                 ? 'text-text-muted hover:text-error hover:bg-error/10'

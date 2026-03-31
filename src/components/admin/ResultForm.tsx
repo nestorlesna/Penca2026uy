@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { Plus, Minus } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { TeamFlag } from '../ui/TeamFlag'
 import { setMatchResult, calculateMatchPoints } from '../../services/adminService'
@@ -12,67 +13,94 @@ interface Props {
 }
 
 interface FormState {
-  homeScore90: string
-  awayScore90: string
-  homeScoreEt: string
-  awayScoreEt: string
-  homeScorePk: string
-  awayScorePk: string
+  homeScore90: number
+  awayScore90: number
+  homeScoreEt: number
+  awayScoreEt: number
+  homeScorePk: number
+  awayScorePk: number
 }
 
 const empty: FormState = {
-  homeScore90: '', awayScore90: '',
-  homeScoreEt: '', awayScoreEt: '',
-  homeScorePk: '', awayScorePk: '',
+  homeScore90: 0, awayScore90: 0,
+  homeScoreEt: 0, awayScoreEt: 0,
+  homeScorePk: 0, awayScorePk: 0,
 }
 
-function numOrNull(v: string): number | null {
-  const n = parseInt(v, 10)
-  return isNaN(n) ? null : n
+// ── Botones +/- ──────────────────────────────────────────────────────────────
+function ScoreInput({
+  value, onChange, large = false,
+}: {
+  value: number
+  onChange: (v: number) => void
+  large?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="w-9 h-9 rounded-lg bg-surface-2 border border-border text-text-primary flex items-center justify-center hover:border-primary/50 transition-colors"
+      >
+        <Minus size={14} />
+      </button>
+      <span className={`w-10 text-center font-bold tabular-nums text-text-primary select-none ${large ? 'text-3xl' : 'text-xl'}`}>
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-9 h-9 rounded-lg bg-surface-2 border border-border text-text-primary flex items-center justify-center hover:border-primary/50 transition-colors"
+      >
+        <Plus size={14} />
+      </button>
+    </div>
+  )
 }
 
 export function ResultForm({ match, onClose }: Props) {
   const qc = useQueryClient()
   const [form, setForm] = useState<FormState>(empty)
 
-  // Inicializar con valores existentes al abrir
   useEffect(() => {
     if (!match) return
     setForm({
-      homeScore90: match.home_score_90 !== null ? String(match.home_score_90) : '',
-      awayScore90: match.away_score_90 !== null ? String(match.away_score_90) : '',
-      homeScoreEt: match.home_score_et !== null ? String(match.home_score_et) : '',
-      awayScoreEt: match.away_score_et !== null ? String(match.away_score_et) : '',
-      homeScorePk: match.home_score_pk !== null ? String(match.home_score_pk) : '',
-      awayScorePk: match.away_score_pk !== null ? String(match.away_score_pk) : '',
+      homeScore90: match.home_score_90 ?? 0,
+      awayScore90: match.away_score_90 ?? 0,
+      homeScoreEt: match.home_score_et ?? 0,
+      awayScoreEt: match.away_score_et ?? 0,
+      homeScorePk: match.home_score_pk ?? 0,
+      awayScorePk: match.away_score_pk ?? 0,
     })
   }, [match])
+
+  function set<K extends keyof FormState>(key: K, val: number) {
+    setForm(f => ({ ...f, [key]: val }))
+  }
+
+  const isKnockout = match?.phase.has_extra_time ?? false
+  const drawAt90   = form.homeScore90 === form.awayScore90
+  const showEt     = isKnockout && drawAt90
+  const drawAtEt   = form.homeScoreEt === form.awayScoreEt
+  const showPk     = showEt && drawAtEt
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (!match) return
-      const h90 = numOrNull(String(form.homeScore90))
-      const a90 = numOrNull(String(form.awayScore90))
-      if (h90 === null || a90 === null) throw new Error('Ingresá los goles a 90 min')
-
-      const isKnockout = match.phase.has_extra_time
-      const drawAt90 = h90 === a90
-
       await setMatchResult(match.id, {
-        homeScore90: h90,
-        awayScore90: a90,
-        homeScoreEt: isKnockout && drawAt90 ? numOrNull(String(form.homeScoreEt)) : null,
-        awayScoreEt: isKnockout && drawAt90 ? numOrNull(String(form.awayScoreEt)) : null,
-        homeScorePk: isKnockout && drawAt90 ? numOrNull(String(form.homeScorePk)) : null,
-        awayScorePk: isKnockout && drawAt90 ? numOrNull(String(form.awayScorePk)) : null,
+        homeScore90: form.homeScore90,
+        awayScore90: form.awayScore90,
+        homeScoreEt: showEt  ? form.homeScoreEt : null,
+        awayScoreEt: showEt  ? form.awayScoreEt : null,
+        homeScorePk: showPk  ? form.homeScorePk : null,
+        awayScorePk: showPk  ? form.awayScorePk : null,
       })
-
-      const count = await calculateMatchPoints(match.id)
-      return count
+      return await calculateMatchPoints(match.id)
     },
     onSuccess: (count) => {
       toast.success(`Resultado guardado · ${count} predicciones calculadas`)
       qc.invalidateQueries({ queryKey: ['matches'] })
+      qc.invalidateQueries({ queryKey: ['predictions'] })
       onClose()
     },
     onError: (e: Error) => toast.error(e.message),
@@ -80,105 +108,60 @@ export function ResultForm({ match, onClose }: Props) {
 
   if (!match) return null
 
-  const isKnockout = match.phase.has_extra_time
-  const h90 = numOrNull(String(form.homeScore90))
-  const a90 = numOrNull(String(form.awayScore90))
-  const drawAt90 = h90 !== null && a90 !== null && h90 === a90
-  const showEt = isKnockout && drawAt90
-
-  const hEt = numOrNull(String(form.homeScoreEt))
-  const aEt = numOrNull(String(form.awayScoreEt))
-  const drawAtEt = hEt !== null && aEt !== null && hEt === aEt
-  const showPk = showEt && drawAtEt
-
-  function set(key: keyof FormState, value: string) {
-    setForm(f => ({ ...f, [key]: value }))
-  }
-
   return (
     <Modal open={!!match} onClose={onClose} title={`Partido #${match.match_number}`} size="sm">
-      <div className="space-y-5">
-        {/* Equipos */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1">
-            <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
-          </div>
-          <span className="text-text-muted text-sm font-medium">vs</span>
-          <div className="flex-1 flex justify-end">
-            <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
-          </div>
-        </div>
+      <div className="space-y-6">
 
         {/* 90 minutos */}
         <div>
-          <p className="text-[11px] text-text-muted uppercase tracking-wide mb-2">90 minutos</p>
-          <div className="flex items-center gap-3">
-            <input
-              type="number" min={0} max={99}
-              value={form.homeScore90}
-              onChange={e => set('homeScore90', e.target.value)}
-              className="input w-full text-center text-xl font-bold"
-              placeholder="0"
-            />
-            <span className="text-text-muted font-bold">-</span>
-            <input
-              type="number" min={0} max={99}
-              value={form.awayScore90}
-              onChange={e => set('awayScore90', e.target.value)}
-              className="input w-full text-center text-xl font-bold"
-              placeholder="0"
-            />
+          <p className="text-[11px] text-text-muted uppercase tracking-wide mb-4 text-center">
+            90 minutos
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 flex flex-col items-center gap-3">
+              <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
+              <ScoreInput large value={form.homeScore90} onChange={v => set('homeScore90', v)} />
+            </div>
+            <span className="text-text-muted text-2xl font-light pb-1">-</span>
+            <div className="flex-1 flex flex-col items-center gap-3">
+              <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
+              <ScoreInput large value={form.awayScore90} onChange={v => set('awayScore90', v)} />
+            </div>
           </div>
         </div>
 
-        {/* Tiempo extra (solo knockout + empate) */}
+        {/* Tiempo extra */}
         {isKnockout && (
-          <div className={showEt ? '' : 'opacity-40 pointer-events-none'}>
-            <p className="text-[11px] text-text-muted uppercase tracking-wide mb-2">Tiempo extra</p>
-            <div className="flex items-center gap-3">
-              <input
-                type="number" min={0} max={99}
-                value={form.homeScoreEt}
-                onChange={e => set('homeScoreEt', e.target.value)}
-                className="input w-full text-center text-lg font-bold"
-                placeholder="0"
-                disabled={!showEt}
-              />
-              <span className="text-text-muted font-bold">-</span>
-              <input
-                type="number" min={0} max={99}
-                value={form.awayScoreEt}
-                onChange={e => set('awayScoreEt', e.target.value)}
-                className="input w-full text-center text-lg font-bold"
-                placeholder="0"
-                disabled={!showEt}
-              />
+          <div className={showEt ? '' : 'opacity-35 pointer-events-none'}>
+            <p className="text-[11px] text-text-muted uppercase tracking-wide mb-4 text-center">
+              Tiempo extra {!showEt && '(solo si hay empate a 90)'}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 flex justify-center">
+                <ScoreInput value={form.homeScoreEt} onChange={v => set('homeScoreEt', v)} />
+              </div>
+              <span className="text-text-muted text-xl font-light">-</span>
+              <div className="flex-1 flex justify-center">
+                <ScoreInput value={form.awayScoreEt} onChange={v => set('awayScoreEt', v)} />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Penales (solo knockout + empate en ET) */}
+        {/* Penales */}
         {isKnockout && (
-          <div className={showPk ? '' : 'opacity-40 pointer-events-none'}>
-            <p className="text-[11px] text-text-muted uppercase tracking-wide mb-2">Penales</p>
-            <div className="flex items-center gap-3">
-              <input
-                type="number" min={0} max={99}
-                value={form.homeScorePk}
-                onChange={e => set('homeScorePk', e.target.value)}
-                className="input w-full text-center text-lg font-bold"
-                placeholder="0"
-                disabled={!showPk}
-              />
-              <span className="text-text-muted font-bold">-</span>
-              <input
-                type="number" min={0} max={99}
-                value={form.awayScorePk}
-                onChange={e => set('awayScorePk', e.target.value)}
-                className="input w-full text-center text-lg font-bold"
-                placeholder="0"
-                disabled={!showPk}
-              />
+          <div className={showPk ? '' : 'opacity-35 pointer-events-none'}>
+            <p className="text-[11px] text-text-muted uppercase tracking-wide mb-4 text-center">
+              Penales {!showPk && '(solo si hay empate en ET)'}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 flex justify-center">
+                <ScoreInput value={form.homeScorePk} onChange={v => set('homeScorePk', v)} />
+              </div>
+              <span className="text-text-muted text-xl font-light">-</span>
+              <div className="flex-1 flex justify-center">
+                <ScoreInput value={form.awayScorePk} onChange={v => set('awayScorePk', v)} />
+              </div>
             </div>
           </div>
         )}
