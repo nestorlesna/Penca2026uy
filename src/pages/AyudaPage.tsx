@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, HelpCircle, Target, Trophy, Zap, Clock, Shield } from 'lucide-react'
+import { Loader2, HelpCircle, Target, Trophy, Zap, Clock, Shield, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { fetchScoringConfig } from '../services/adminService'
+import { fetchBonusConfig } from '../services/bonusService'
 
 interface ScoringConfig {
   id: string
@@ -80,6 +82,12 @@ export function AyudaPage() {
     queryKey: ['scoring_config'],
     queryFn: fetchScoringConfig,
     staleTime: 1000 * 60 * 5,
+  })
+
+  const { data: bonusCfg = {} } = useQuery({
+    queryKey: ['bonus_config'],
+    queryFn: fetchBonusConfig,
+    staleTime: Infinity,
   })
 
   const cfg = (configs as ScoringConfig[]).find(c => c.is_active)
@@ -378,6 +386,96 @@ export function AyudaPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* ── + PUNTOS (APUESTAS ESPECIALES) ── */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest flex items-center gap-2">
+          <span className="w-5 h-px bg-border inline-block" />
+          Apuestas especiales (+ Puntos)
+          <span className="flex-1 h-px bg-border inline-block" />
+        </h2>
+
+        <div className="card p-4 space-y-2">
+          <p className="text-sm text-text-secondary leading-relaxed">
+            Además de predecir partidos, podés ganar puntos extra respondiendo preguntas especiales
+            antes de que inicie el torneo. Se encuentran en la sección{' '}
+            <Link to="/mas-puntos" className="text-accent underline font-medium">+ Puntos</Link>.
+          </p>
+        </div>
+
+        <div className="card overflow-hidden">
+          {[
+            {
+              icon: '🏆',
+              title: 'Podio del torneo (top 4)',
+              pts: `${bonusCfg['podio_exacto'] ?? 10} pts por posición exacta · ${bonusCfg['podio_presencia'] ?? 5} pts si el equipo queda en top 4 pero en otro lugar`,
+              when: 'Al finalizar la Final (M104) y el 3er puesto (M103)',
+              example: 'Si apostás a Brasil 1°, Argentina 2°, Francia 3°, Alemania 4°… y acertás a Brasil 1° y Argentina 2° → ganás ' + ((bonusCfg['podio_exacto'] ?? 10) * 2) + ' pts. Si Francia queda 4° (no 3°) → ganás ' + (bonusCfg['podio_presencia'] ?? 5) + ' pts de presencia.',
+            },
+            {
+              icon: '🤝',
+              title: 'Empates en fase de grupos',
+              pts: `${bonusCfg['empates_grupos'] ?? 15} pts si acertás el número exacto`,
+              when: 'Al finalizar todos los 72 partidos de la fase de grupos',
+              example: 'Si predecís 18 empates y fueron exactamente 18 → ganás ' + (bonusCfg['empates_grupos'] ?? 15) + ' pts.',
+            },
+            {
+              icon: '⚽',
+              title: 'Rango de goles del torneo',
+              pts: `${bonusCfg['rango_goles'] ?? 20} pts — rangos de 20 en 20 (1-20, 21-40 … 321-340, 341+)`,
+              when: 'Al finalizar la Final',
+              example: 'Cuenta todos los goles de 90\' + tiempo extra de los 104 partidos (sin contar penales). Si predecís 241-260 y fueron 247 → ganás ' + (bonusCfg['rango_goles'] ?? 20) + ' pts.',
+            },
+            {
+              icon: '🎯',
+              title: '¿Habrá 0-0 en la Final?',
+              pts: `${bonusCfg['final_cero'] ?? 25} pts si acertás`,
+              when: 'Al cargar el resultado de la Final',
+              example: 'Respondés Sí o No. Si predecís No y la Final termina 1-0 → ganás ' + (bonusCfg['final_cero'] ?? 25) + ' pts.',
+            },
+            {
+              icon: '🔥',
+              title: 'Equipo con más goles',
+              pts: `${bonusCfg['top_scorer_team'] ?? 20} pts si acertás`,
+              when: 'Al finalizar la Final',
+              example: 'Cuenta goles de 90\' + tiempo extra de todos los partidos en que participó el equipo (sin penales). Un equipo que llegue a la Final jugó al menos 7 partidos.',
+            },
+            {
+              icon: '📊',
+              title: 'Grupo con más goles',
+              pts: `${bonusCfg['top_group_goals'] ?? 13} pts si acertás`,
+              when: 'Al finalizar la fase de grupos',
+              example: 'Cada grupo juega 6 partidos. Ganás si predecís correctamente qué grupo marcó más goles en esos 6 encuentros.',
+            },
+          ].map(({ icon, title, pts, when, example }) => (
+            <div key={title} className="border-b border-border last:border-0 px-4 py-3 space-y-1">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">
+                  {icon} {title}
+                </p>
+                <span className="flex-shrink-0 text-xs font-bold text-accent bg-accent/10 rounded px-2 py-0.5">{pts}</span>
+              </div>
+              <p className="text-[11px] text-text-muted">⏱ {when}</p>
+              <p className="text-[11px] text-text-secondary leading-relaxed">Ej: {example}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-accent/5 border border-accent/20 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-text-secondary flex items-center gap-1.5">
+              <Star size={12} className="text-accent" /> Máximo de puntos especiales
+            </p>
+            <p className="text-[11px] text-text-muted mt-0.5">
+              Si acertás las 6 apuestas especiales (podio completo) podés sumar más de{' '}
+              {(bonusCfg['podio_exacto'] ?? 10) * 4 + (bonusCfg['empates_grupos'] ?? 15) + (bonusCfg['rango_goles'] ?? 20) + (bonusCfg['final_cero'] ?? 25) + (bonusCfg['top_scorer_team'] ?? 20) + (bonusCfg['top_group_goals'] ?? 13)} pts extra.
+            </p>
+          </div>
+          <Link to="/mas-puntos" className="btn-primary text-xs px-3 py-1.5 flex-shrink-0">
+            Apostar →
+          </Link>
         </div>
       </section>
 

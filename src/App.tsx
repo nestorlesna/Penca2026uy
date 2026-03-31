@@ -19,6 +19,9 @@ import { AyudaPage } from './pages/AyudaPage'
 import { EquiposAdminPage } from './pages/admin/EquiposAdminPage'
 import { PartidosAdminPage } from './pages/admin/PartidosAdminPage'
 import { AuditoriaPage } from './pages/admin/AuditoriaPage'
+import { TercerosPage } from './pages/admin/TercerosPage'
+import { BracketPage } from './pages/BracketPage'
+import { MasPuntosPage } from './pages/MasPuntosPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +45,8 @@ export default function App() {
             <Route path="perfil"            element={<PerfilPage />} />
             <Route path="auth"              element={<AuthPage />} />
             <Route path="ayuda"             element={<AyudaPage />} />
+            <Route path="cuadro"            element={<BracketPage />} />
+            <Route path="mas-puntos"        element={<MasPuntosPage />} />
             {/* Admin */}
             <Route path="admin/usuarios"    element={<UsuariosPage />} />
             <Route path="admin/resultados"  element={<ResultadosPage />} />
@@ -49,6 +54,7 @@ export default function App() {
             <Route path="admin/equipos"     element={<EquiposAdminPage />} />
             <Route path="admin/auditoria"   element={<AuditoriaPage />} />
             <Route path="admin/partidos"    element={<PartidosAdminPage />} />
+            <Route path="admin/terceros"    element={<TercerosPage />} />
             <Route path="*"                 element={<NotFoundPage />} />
           </Route>
         </Routes>

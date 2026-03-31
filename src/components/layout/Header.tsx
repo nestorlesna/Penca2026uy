@@ -47,7 +47,9 @@ export function Header() {
             <DeskNavLink to="/fixture">Fixture</DeskNavLink>
             <DeskNavLink to="/grupos">Grupos</DeskNavLink>
             <DeskNavLink to="/ranking">Ranking</DeskNavLink>
+            <DeskNavLink to="/cuadro">Cuadro</DeskNavLink>
             {user && <DeskNavLink to="/mis-predicciones">Mis apuestas</DeskNavLink>}
+            {user && <DeskNavLink to="/mas-puntos">+ Puntos</DeskNavLink>}
             <DeskNavLink to="/ayuda">
               <HelpCircle size={14} className="inline mr-1" />Ayuda
             </DeskNavLink>
@@ -96,6 +98,7 @@ export function Header() {
                         <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
                         <Link to="/admin/partidos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos</Link>
                         <Link to="/admin/equipos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Equipos</Link>
+                        <Link to="/admin/terceros" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Terceros</Link>
                         <Link to="/admin/auditoria" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Auditoría</Link>
                         <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
                       </>
@@ -133,13 +136,16 @@ export function Header() {
             <MobileNavLink to="/fixture">Fixture</MobileNavLink>
             <MobileNavLink to="/grupos">Grupos</MobileNavLink>
             <MobileNavLink to="/ranking">Ranking</MobileNavLink>
+            <MobileNavLink to="/cuadro">Cuadro</MobileNavLink>
             {user && <MobileNavLink to="/mis-predicciones">Mis apuestas</MobileNavLink>}
+            {user && <MobileNavLink to="/mas-puntos">+ Puntos</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
             <MobileNavLink to="/ayuda">Ayuda · Puntaje</MobileNavLink>
             {isAdmin && <MobileNavLink to="/admin/usuarios">Admin · Usuarios</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/resultados">Admin · Resultados</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/partidos">Admin · Partidos</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/equipos">Admin · Equipos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/terceros">Admin · Terceros</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}

@@ -33,6 +33,8 @@ export async function setMatchStatus(matchId: string, status: 'scheduled' | 'liv
 export async function calculateMatchPoints(matchId: string): Promise<number> {
   const { data, error } = await supabase.rpc('calculate_match_points', { p_match_id: matchId })
   if (error) throw error
+  // También recalcula bonus (idempotente — verifica condiciones internamente)
+  await supabase.rpc('calculate_bonus_points').throwOnError()
   return data as number
 }
 
