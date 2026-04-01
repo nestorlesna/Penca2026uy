@@ -166,7 +166,7 @@ DROP TRIGGER IF EXISTS trg_match_winner ON matches;
 CREATE TRIGGER trg_match_winner
   BEFORE UPDATE ON matches
   FOR EACH ROW
-  WHEN (NEW.status = 'finished' AND (OLD.status IS DISTINCT FROM 'finished'))
+  WHEN (NEW.status = 'finished')
   EXECUTE FUNCTION auto_set_match_winner();
 
 -- ============================================================

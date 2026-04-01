@@ -4,7 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 export function Header() {
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, signOut, isAdmin, isLoader } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -58,6 +58,11 @@ export function Header() {
                 <ShieldCheck size={14} className="inline mr-1" />Admin
               </DeskNavLink>
             )}
+            {!isAdmin && isLoader && (
+              <DeskNavLink to="/admin/resultados">
+                <ShieldCheck size={14} className="inline mr-1" />Resultados
+              </DeskNavLink>
+            )}
           </nav>
 
           {/* Derecha: usuario o botón ingresar */}
@@ -102,7 +107,17 @@ export function Header() {
                         <Link to="/admin/posiciones-grupos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Posiciones grupos</Link>
                         <Link to="/admin/combinaciones" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Combinaciones 16avos</Link>
                         <Link to="/admin/auditoria" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Auditoría</Link>
-                        <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
+                            <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
+                      </>
+                    )}
+                    {!isAdmin && isLoader && (
+                      <>
+                        <div className="px-4 pt-2 pb-1">
+                          <p className="text-[10px] text-text-muted uppercase tracking-wider flex items-center gap-1">
+                            <ShieldCheck size={11} />Cargador
+                          </p>
+                        </div>
+                        <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
                       </>
                     )}
                     <button
@@ -152,6 +167,7 @@ export function Header() {
             {isAdmin && <MobileNavLink to="/admin/combinaciones">Admin · Combinaciones 16avos</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
+            {!isAdmin && isLoader && <MobileNavLink to="/admin/resultados">Resultados</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}
           </nav>
         </div>

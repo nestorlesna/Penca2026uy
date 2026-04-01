@@ -39,6 +39,11 @@ export async function setUserActive(userId: string, isActive: boolean) {
 }
 
 export async function setUserAdmin(userId: string, isAdmin: boolean) {
-    const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId)
+  const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId)
+  if (error) throw error
+}
+
+export async function setUserLoader(userId: string, isLoader: boolean) {
+  const { error } = await supabase.from('profiles').update({ is_loader: isLoader }).eq('id', userId)
   if (error) throw error
 }

@@ -166,6 +166,94 @@ function BonusSection({
 
 // ── Section: Podio ────────────────────────────────────────────────────────────
 
+type PodioDetail = {
+  predicted: Record<string, string | null>
+  actual:    Record<string, string | null>
+}
+
+function PodioResultado({
+  detail, teams, exacto, pres,
+}: {
+  detail: PodioDetail
+  teams: TeamOption[]
+  exacto: number
+  pres: number
+}) {
+  const teamById = (id: string | null) => teams.find(t => t.id === id) ?? null
+
+  const slots: Array<{ key: string; emoji: string; label: string }> = [
+    { key: '1st', emoji: '🥇', label: 'Campeón' },
+    { key: '2nd', emoji: '🥈', label: 'Subcampeón' },
+    { key: '3rd', emoji: '🥉', label: '3° puesto' },
+    { key: '4th', emoji: '4️⃣', label: '4° puesto' },
+  ]
+
+  const actualIds = Object.values(detail.actual).filter(Boolean) as string[]
+
+  function pointsForSlot(key: string): number {
+    const pred = detail.predicted[key]
+    const act  = detail.actual[key]
+    if (!pred) return 0
+    if (pred === act) return exacto
+    if (actualIds.includes(pred)) return pres
+    return 0
+  }
+
+  return (
+    <div className="mt-4 space-y-2">
+      <p className="text-[11px] text-text-muted uppercase tracking-wide font-semibold">Podio real</p>
+      {slots.map(({ key, emoji, label }) => {
+        const actualTeam = teamById(detail.actual[key] ?? null)
+        const predTeam   = teamById(detail.predicted[key] ?? null)
+        const slotPts    = pointsForSlot(key)
+        const isExact    = slotPts === exacto
+        const isPresence = slotPts === pres && slotPts > 0
+
+        return (
+          <div key={key} className="flex items-center gap-3 rounded-xl bg-surface-2/60 px-3 py-2">
+            {/* Posición */}
+            <span className="text-base w-6 text-center flex-shrink-0">{emoji}</span>
+
+            {/* Equipo real */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {actualTeam ? (
+                <>
+                  {actualTeam.flag_url
+                    ? <img src={actualTeam.flag_url} alt={actualTeam.abbreviation} className="w-6 h-4 rounded-sm object-cover flex-shrink-0" />
+                    : <div className="w-6 h-4 rounded-sm bg-border flex items-center justify-center flex-shrink-0">
+                        <span className="text-[8px] text-text-muted font-bold">{actualTeam.abbreviation}</span>
+                      </div>
+                  }
+                  <span className="text-sm text-text-primary font-medium truncate">{actualTeam.name}</span>
+                </>
+              ) : (
+                <span className="text-sm text-text-muted italic">Por definir</span>
+              )}
+            </div>
+
+            {/* Mi apuesta + puntos */}
+            <div className="flex-shrink-0 text-right">
+              {predTeam && (
+                <p className="text-[10px] text-text-muted truncate max-w-[80px]">
+                  {isExact || isPresence ? '' : ''}
+                  {predTeam.abbreviation}
+                </p>
+              )}
+              {slotPts > 0 ? (
+                <span className={`text-xs font-bold ${isExact ? 'text-primary' : 'text-accent'}`}>
+                  +{slotPts} pts{isPresence ? ' ↗' : ''}
+                </span>
+              ) : predTeam ? (
+                <span className="text-xs text-text-muted">0 pts</span>
+              ) : null}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function PodioSection({
   pred, config, earned, teams, locked, onSave,
 }: {
@@ -192,6 +280,8 @@ function PodioSection({
   const pres     = config['podio_presencia'] ?? 5
   const maxPts   = exacto * 4
   const descr    = `${pts(exacto)} por posición exacta · ${pts(pres)} si acierta el equipo en otro lugar · hasta ${pts(maxPts)}`
+
+  const podioDetail = earned?.detail as PodioDetail | undefined
 
   const positions = [
     { label: '🥇 1° puesto (Campeón)',     val: v1, set: setV1 },
@@ -220,6 +310,15 @@ function PodioSection({
         >
           Guardar podio
         </button>
+      )}
+
+      {podioDetail?.actual && (
+        <PodioResultado
+          detail={podioDetail}
+          teams={teams}
+          exacto={exacto}
+          pres={pres}
+        />
       )}
     </BonusSection>
   )
@@ -267,10 +366,15 @@ function EmpatesSection({
           ))}
         </select>
         {earned && actual !== undefined && (
-          <p className="text-xs text-text-muted">
-            Empates reales: <span className="text-text-primary font-semibold">{actual}</span>
-            {pred?.empates_grupos != null && ` · tu apuesta: ${pred.empates_grupos}`}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-text-muted">
+              Empates reales: <span className="text-text-primary font-semibold">{actual}</span>
+              {pred?.empates_grupos != null && ` · tu apuesta: ${pred.empates_grupos}`}
+            </p>
+            <p className={`text-xs font-bold ${earned.points_earned > 0 ? 'text-primary' : 'text-text-muted'}`}>
+              {earned.points_earned > 0 ? `+${earned.points_earned} pts ganados` : '0 pts · no acertaste'}
+            </p>
+          </div>
         )}
       </div>
       {!locked && (
@@ -328,11 +432,16 @@ function RangoGolesSection({
           ))}
         </select>
         {earned && actual && (
-          <p className="text-xs text-text-muted">
-            Rango real: <span className="text-text-primary font-semibold">{actual}</span>
-            {total !== undefined && ` (${total} goles en total)`}
-            {pred?.rango_goles && ` · tu apuesta: ${pred.rango_goles}`}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-text-muted">
+              Rango real: <span className="text-text-primary font-semibold">{actual}</span>
+              {total !== undefined && ` (${total} goles en total)`}
+              {pred?.rango_goles && ` · tu apuesta: ${pred.rango_goles}`}
+            </p>
+            <p className={`text-xs font-bold ${earned.points_earned > 0 ? 'text-primary' : 'text-text-muted'}`}>
+              {earned.points_earned > 0 ? `+${earned.points_earned} pts ganados` : '0 pts · no acertaste'}
+            </p>
+          </div>
         )}
       </div>
       {!locked && (
@@ -403,9 +512,14 @@ function FinalCeroSection({
           )
         })}
         {earned && actual !== undefined && (
-          <p className="text-xs text-text-muted pt-1">
-            Resultado real: <span className="text-text-primary font-semibold">{actual ? 'Sí, fue 0-0' : 'No fue 0-0'}</span>
-          </p>
+          <div className="space-y-1 pt-1">
+            <p className="text-xs text-text-muted">
+              Resultado real: <span className="text-text-primary font-semibold">{actual ? 'Sí, fue 0-0' : 'No fue 0-0'}</span>
+            </p>
+            <p className={`text-xs font-bold ${earned.points_earned > 0 ? 'text-primary' : 'text-text-muted'}`}>
+              {earned.points_earned > 0 ? `+${earned.points_earned} pts ganados` : '0 pts · no acertaste'}
+            </p>
+          </div>
         )}
       </div>
       {!locked && (
@@ -437,6 +551,8 @@ function TopScorerTeamSection({
   useEffect(() => { setVal(pred?.top_scorer_team_id ?? null) }, [pred])
 
   const puntos = config['top_scorer_team'] ?? 20
+  const actualTeamId = earned?.detail?.actual_id as string | undefined
+  const actualTeam   = actualTeamId ? teams.find(t => t.id === actualTeamId) ?? null : null
 
   return (
     <BonusSection
@@ -457,6 +573,23 @@ function TopScorerTeamSection({
         >
           Guardar
         </button>
+      )}
+      {earned && actualTeam && (
+        <div className="mt-3 space-y-1">
+          <p className="text-[11px] text-text-muted uppercase tracking-wide font-semibold">Equipo real</p>
+          <div className="flex items-center gap-2 rounded-xl bg-surface-2/60 px-3 py-2">
+            {actualTeam.flag_url
+              ? <img src={actualTeam.flag_url} alt={actualTeam.abbreviation} className="w-6 h-4 rounded-sm object-cover flex-shrink-0" />
+              : <div className="w-6 h-4 rounded-sm bg-border flex items-center justify-center flex-shrink-0">
+                  <span className="text-[8px] text-text-muted font-bold">{actualTeam.abbreviation}</span>
+                </div>
+            }
+            <span className="text-sm text-text-primary font-medium flex-1">{actualTeam.name}</span>
+            <span className={`text-xs font-bold flex-shrink-0 ${earned.points_earned > 0 ? 'text-primary' : 'text-text-muted'}`}>
+              {earned.points_earned > 0 ? `+${earned.points_earned} pts` : '0 pts'}
+            </span>
+          </div>
+        </div>
       )}
     </BonusSection>
   )
@@ -479,6 +612,8 @@ function TopGroupSection({
   useEffect(() => { setVal(pred?.top_group_id ?? null) }, [pred])
 
   const puntos = config['top_group_goals'] ?? 13
+  const actualGroupId = earned?.detail?.actual_id as string | undefined
+  const actualGroup   = actualGroupId ? groups.find(g => g.id === actualGroupId) ?? null : null
 
   return (
     <BonusSection
@@ -509,6 +644,17 @@ function TopGroupSection({
         >
           Guardar
         </button>
+      )}
+      {earned && actualGroup && (
+        <div className="mt-3 space-y-1">
+          <p className="text-[11px] text-text-muted uppercase tracking-wide font-semibold">Grupo real</p>
+          <div className="flex items-center gap-2 rounded-xl bg-surface-2/60 px-3 py-2">
+            <span className="text-sm text-text-primary font-medium flex-1">Grupo {actualGroup.name}</span>
+            <span className={`text-xs font-bold flex-shrink-0 ${earned.points_earned > 0 ? 'text-primary' : 'text-text-muted'}`}>
+              {earned.points_earned > 0 ? `+${earned.points_earned} pts` : '0 pts'}
+            </span>
+          </div>
+        </div>
       )}
     </BonusSection>
   )

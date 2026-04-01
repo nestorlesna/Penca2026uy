@@ -52,7 +52,8 @@ export function useAuth() {
   return {
     ...state,
     signOut,
-    isAdmin: state.profile?.is_admin ?? false,
+    isAdmin:  state.profile?.is_admin  ?? false,
+    isLoader: state.profile?.is_loader ?? false,
     isActive: state.profile?.is_active ?? false,
   }
 }

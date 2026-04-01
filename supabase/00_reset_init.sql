@@ -28,9 +28,14 @@ BEGIN
     RAISE EXCEPTION 'Usuario nestor.lesna@gmail.com no encontrado en auth.users. Registrate primero en la app.';
   END IF;
 
-  -- Eliminar predicciones de todos los usuarios que no son el admin
-  DELETE FROM predictions
-  WHERE user_id != v_admin_id;
+  -- Eliminar predicciones y bonus de todos los usuarios que no son el admin
+  DELETE FROM predictions       WHERE user_id != v_admin_id;
+  DELETE FROM bonus_predictions WHERE user_id != v_admin_id;
+  DELETE FROM bonus_points      WHERE user_id != v_admin_id;
+
+  -- Limpiar overrides de posición (datos calculados, no de usuario)
+  DELETE FROM group_position_overrides;
+  DELETE FROM best_third_rank_overrides;
 
   -- Eliminar perfiles de usuarios que no son el admin
   DELETE FROM profiles
@@ -56,6 +61,10 @@ $$;
 TRUNCATE TABLE
   knockout_slot_rules,
   predictions,
+  bonus_predictions,
+  bonus_points,
+  predictions_audit,
+  bonus_predictions_audit,
   matches,
   teams,
   stadiums,
@@ -125,6 +134,19 @@ INSERT INTO scoring_config (
   3,  -- Resultado ET exacto
   2   -- Ganador penales correcto
 );
+
+-- ============================================================
+-- PASO 6b: CONFIGURACIÓN DE BONUS (+PUNTOS)
+-- ============================================================
+INSERT INTO bonus_config (bonus_type, points) VALUES
+  ('podio_exacto',    10),
+  ('podio_presencia',  5),
+  ('empates_grupos',  15),
+  ('rango_goles',     20),
+  ('final_cero',      25),
+  ('top_scorer_team', 20),
+  ('top_group_goals', 13)
+ON CONFLICT (bonus_type) DO UPDATE SET points = EXCLUDED.points, is_active = true;
 
 -- ============================================================
 -- PASO 7: EQUIPOS (48)
@@ -545,9 +567,10 @@ $$;
 -- ============================================================
 DO $$
 DECLARE
-  cnt_groups   INT; cnt_phases  INT; cnt_stadiums INT;
-  cnt_teams    INT; cnt_matches INT; cnt_ksr      INT;
-  cnt_config   INT; cnt_profiles INT; admin_name TEXT;
+  cnt_groups   INT; cnt_phases    INT; cnt_stadiums INT;
+  cnt_teams    INT; cnt_matches   INT; cnt_ksr      INT;
+  cnt_config   INT; cnt_profiles  INT; admin_name   TEXT;
+  cnt_bonus    INT; cnt_comb      INT;
 BEGIN
   SELECT COUNT(*) INTO cnt_groups   FROM groups;
   SELECT COUNT(*) INTO cnt_phases   FROM phases;
@@ -557,6 +580,8 @@ BEGIN
   SELECT COUNT(*) INTO cnt_ksr      FROM knockout_slot_rules;
   SELECT COUNT(*) INTO cnt_config   FROM scoring_config WHERE is_active = true;
   SELECT COUNT(*) INTO cnt_profiles FROM profiles;
+  SELECT COUNT(*) INTO cnt_bonus    FROM bonus_config   WHERE is_active = true;
+  SELECT COUNT(*) INTO cnt_comb     FROM combinaciones;
   SELECT display_name INTO admin_name FROM profiles WHERE is_admin = true LIMIT 1;
 
   RAISE NOTICE '';
@@ -570,17 +595,21 @@ BEGIN
   RAISE NOTICE '  Partidos:      % / 104', cnt_matches;
   RAISE NOTICE '  Reglas llave:  % / 64',  cnt_ksr;
   RAISE NOTICE '  Config activa: %',        cnt_config;
+  RAISE NOTICE '  Bonus config:  % / 7',   cnt_bonus;
+  RAISE NOTICE '  Combinaciones: % / 495', cnt_comb;
   RAISE NOTICE '  Usuarios:      %',        cnt_profiles;
   RAISE NOTICE '  Admin:         %',        admin_name;
   RAISE NOTICE '══════════════════════════════════════';
 
   -- Alertas si algo no cuadra
-  IF cnt_groups   != 12  THEN RAISE WARNING 'Grupos incorrectos: %',   cnt_groups;   END IF;
-  IF cnt_phases   != 7   THEN RAISE WARNING 'Fases incorrectas: %',    cnt_phases;   END IF;
-  IF cnt_stadiums != 16  THEN RAISE WARNING 'Estadios incorrectos: %', cnt_stadiums; END IF;
-  IF cnt_teams    != 48  THEN RAISE WARNING 'Equipos incorrectos: %',  cnt_teams;    END IF;
-  IF cnt_matches  != 104 THEN RAISE WARNING 'Partidos incorrectos: %', cnt_matches;  END IF;
-  IF cnt_ksr      != 64  THEN RAISE WARNING 'Reglas llave incorrectas: %', cnt_ksr;  END IF;
-  IF cnt_config   != 1   THEN RAISE WARNING 'No hay config activa!';                 END IF;
+  IF cnt_groups   != 12  THEN RAISE WARNING 'Grupos incorrectos: %',        cnt_groups;   END IF;
+  IF cnt_phases   != 7   THEN RAISE WARNING 'Fases incorrectas: %',         cnt_phases;   END IF;
+  IF cnt_stadiums != 16  THEN RAISE WARNING 'Estadios incorrectos: %',      cnt_stadiums; END IF;
+  IF cnt_teams    != 48  THEN RAISE WARNING 'Equipos incorrectos: %',       cnt_teams;    END IF;
+  IF cnt_matches  != 104 THEN RAISE WARNING 'Partidos incorrectos: %',      cnt_matches;  END IF;
+  IF cnt_ksr      != 64  THEN RAISE WARNING 'Reglas llave incorrectas: %',  cnt_ksr;      END IF;
+  IF cnt_config   != 1   THEN RAISE WARNING 'No hay config activa!';                       END IF;
+  IF cnt_bonus    != 7   THEN RAISE WARNING 'Bonus config incompleta: % / 7', cnt_bonus;  END IF;
+  IF cnt_comb     != 495 THEN RAISE WARNING '⚠ Combinaciones vacías o incompletas: % / 495. Ejecutar 09_combinaciones.sql', cnt_comb; END IF;
 END;
 $$;
