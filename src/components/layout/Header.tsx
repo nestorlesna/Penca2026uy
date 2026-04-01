@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trophy, Menu, X, ShieldCheck } from 'lucide-react'
+import { Trophy, Menu, X, ShieldCheck, HelpCircle } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 export function Header() {
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, signOut, isAdmin, isLoader } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -38,8 +38,8 @@ export function Header() {
           {/* Logo */}
           <Link to="/fixture" className="flex items-center gap-2 font-bold text-text-primary">
             <Trophy className="text-accent" size={20} />
-            <span className="text-sm font-semibold hidden xs:block">Penca Mundial 2026</span>
-            <span className="text-sm font-semibold xs:hidden">Penca 2026</span>
+            <span className="text-sm font-semibold hidden xs:block">PencaLes 2026</span>
+            <span className="text-sm font-semibold xs:hidden">PencaLes 2026</span>
           </Link>
 
           {/* Desktop nav */}
@@ -47,10 +47,20 @@ export function Header() {
             <DeskNavLink to="/fixture">Fixture</DeskNavLink>
             <DeskNavLink to="/grupos">Grupos</DeskNavLink>
             <DeskNavLink to="/ranking">Ranking</DeskNavLink>
+            <DeskNavLink to="/cuadro">Cuadro</DeskNavLink>
             {user && <DeskNavLink to="/mis-predicciones">Mis apuestas</DeskNavLink>}
+            {user && <DeskNavLink to="/mas-puntos">+ Puntos</DeskNavLink>}
+            <DeskNavLink to="/ayuda">
+              <HelpCircle size={14} className="inline mr-1" />Ayuda
+            </DeskNavLink>
             {isAdmin && (
               <DeskNavLink to="/admin/usuarios">
                 <ShieldCheck size={14} className="inline mr-1" />Admin
+              </DeskNavLink>
+            )}
+            {!isAdmin && isLoader && (
+              <DeskNavLink to="/admin/resultados">
+                <ShieldCheck size={14} className="inline mr-1" />Resultados
               </DeskNavLink>
             )}
           </nav>
@@ -91,7 +101,23 @@ export function Header() {
                         </div>
                         <Link to="/admin/usuarios" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Usuarios</Link>
                         <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
-                        <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
+                        <Link to="/admin/partidos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos</Link>
+                        <Link to="/admin/equipos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Equipos</Link>
+                        <Link to="/admin/terceros" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Terceros</Link>
+                        <Link to="/admin/posiciones-grupos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Posiciones grupos</Link>
+                        <Link to="/admin/combinaciones" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Combinaciones 16avos</Link>
+                        <Link to="/admin/auditoria" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Auditoría</Link>
+                            <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
+                      </>
+                    )}
+                    {!isAdmin && isLoader && (
+                      <>
+                        <div className="px-4 pt-2 pb-1">
+                          <p className="text-[10px] text-text-muted uppercase tracking-wider flex items-center gap-1">
+                            <ShieldCheck size={11} />Cargador
+                          </p>
+                        </div>
+                        <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
                       </>
                     )}
                     <button
@@ -127,11 +153,21 @@ export function Header() {
             <MobileNavLink to="/fixture">Fixture</MobileNavLink>
             <MobileNavLink to="/grupos">Grupos</MobileNavLink>
             <MobileNavLink to="/ranking">Ranking</MobileNavLink>
+            <MobileNavLink to="/cuadro">Cuadro</MobileNavLink>
             {user && <MobileNavLink to="/mis-predicciones">Mis apuestas</MobileNavLink>}
+            {user && <MobileNavLink to="/mas-puntos">+ Puntos</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
+            <MobileNavLink to="/ayuda">Ayuda · Puntaje</MobileNavLink>
             {isAdmin && <MobileNavLink to="/admin/usuarios">Admin · Usuarios</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/resultados">Admin · Resultados</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/partidos">Admin · Partidos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/equipos">Admin · Equipos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/terceros">Admin · Terceros</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/posiciones-grupos">Admin · Posiciones grupos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/combinaciones">Admin · Combinaciones 16avos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
+            {!isAdmin && isLoader && <MobileNavLink to="/admin/resultados">Resultados</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}
           </nav>
         </div>

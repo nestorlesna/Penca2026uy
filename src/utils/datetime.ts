@@ -1,33 +1,31 @@
-// Utilidades de fecha/hora. Todos los partidos se muestran en ET (America/New_York)
-// para mantener consistencia con el calendario oficial publicado.
+// Utilidades de fecha/hora.
+// Las horas se muestran en la zona horaria local del dispositivo del usuario,
+// con la abreviación de zona explícita (ej: "UYT", "CEST", "EST").
+// La seguridad de bloqueo de predicciones es 100% server-side (RLS en Supabase).
 
-const ET = 'America/New_York'
-
-/** "Hoy", "Mañana" o "vie 11 jun" */
+/** "Hoy", "Mañana" o "vie 11 jun" — en zona local del usuario */
 export function formatMatchDay(utcDatetime: string): string {
   const date = new Date(utcDatetime)
   const now = new Date()
 
-  const dateET = toETDate(date)
-  const todayET = toETDate(now)
-  const tomorrowET = new Date(todayET)
-  tomorrowET.setDate(tomorrowET.getDate() + 1)
+  const localDate = toLocalDate(date)
+  const todayLocal = toLocalDate(now)
+  const tomorrowLocal = new Date(todayLocal)
+  tomorrowLocal.setDate(tomorrowLocal.getDate() + 1)
 
-  if (dateET.toDateString() === todayET.toDateString()) return 'Hoy'
-  if (dateET.toDateString() === tomorrowET.toDateString()) return 'Mañana'
+  if (localDate.toDateString() === todayLocal.toDateString()) return 'Hoy'
+  if (localDate.toDateString() === tomorrowLocal.toDateString()) return 'Mañana'
 
   return date.toLocaleDateString('es-UY', {
-    timeZone: ET,
     weekday: 'short',
     day: 'numeric',
     month: 'short',
   })
 }
 
-/** "vie 11 jun 2026" — para cabeceras de grupo de fecha */
+/** "viernes 11 de junio de 2026" — para cabeceras de grupo de fecha */
 export function formatMatchDayFull(utcDatetime: string): string {
   return new Date(utcDatetime).toLocaleDateString('es-UY', {
-    timeZone: ET,
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -35,27 +33,27 @@ export function formatMatchDayFull(utcDatetime: string): string {
   })
 }
 
-/** "15:00" en ET */
+/** "15:00 UYT" — hora local del usuario con zona explícita */
 export function formatMatchTime(utcDatetime: string): string {
   return new Date(utcDatetime).toLocaleTimeString('es-UY', {
-    timeZone: ET,
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZoneName: 'short',
   })
 }
 
-/** Clave de agrupación: fecha en ET como YYYY-MM-DD */
+/** Clave de agrupación: fecha local como YYYY-MM-DD */
 export function matchDateKey(utcDatetime: string): string {
-  return new Date(utcDatetime).toLocaleDateString('en-CA', { timeZone: ET }) // en-CA da YYYY-MM-DD
+  return new Date(utcDatetime).toLocaleDateString('en-CA') // en-CA da YYYY-MM-DD en zona local
 }
 
-/** ¿El partido ya empezó? */
+/** ¿El partido ya empezó? (solo para UI — el control real es server-side via RLS) */
 export function matchStarted(utcDatetime: string): boolean {
   return new Date(utcDatetime) <= new Date()
 }
 
-// Helper interno
-function toETDate(d: Date): Date {
-  return new Date(d.toLocaleString('en-US', { timeZone: ET }))
+// Helper interno: fecha en zona local del dispositivo
+function toLocalDate(d: Date): Date {
+  return new Date(d.toLocaleDateString('en-CA'))
 }

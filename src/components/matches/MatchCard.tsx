@@ -9,12 +9,10 @@ interface Props {
 }
 
 export function MatchCard({ match, onClick }: Props) {
-  const isFinished = match.status === 'finished'
-  const isLive = match.status === 'live'
   const hasScore = match.home_score_90 !== null && match.away_score_90 !== null
 
-  const homeWon = isFinished && match.winner_team_id === match.home_team?.id
-  const awayWon = isFinished && match.winner_team_id === match.away_team?.id
+  const homeWon = hasScore && match.winner_team_id === match.home_team?.id
+  const awayWon = hasScore && match.winner_team_id === match.away_team?.id
 
   return (
     <div
@@ -37,16 +35,11 @@ export function MatchCard({ match, onClick }: Props) {
           <span className="text-text-muted text-xs">#{match.match_number}</span>
         </div>
 
-        {isLive ? (
-          <span className="flex items-center gap-1 text-error text-xs font-semibold animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-error inline-block" />
-            EN VIVO
-          </span>
-        ) : isFinished ? (
+        {hasScore ? (
           <span className="text-text-muted text-xs">Finalizado</span>
         ) : (
           <span className="text-text-secondary text-xs">
-            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)} ET
+            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
           </span>
         )}
       </div>
@@ -81,11 +74,13 @@ export function MatchCard({ match, onClick }: Props) {
 
           {/* Indicadores de ET y penales */}
           {match.home_score_et !== null && (
-            <div className="text-[10px] text-text-muted mt-0.5">
-              ET {match.home_score_et}:{match.away_score_et}
-              {match.home_score_pk !== null && (
-                <span className="ml-1">· P {match.home_score_pk}:{match.away_score_pk}</span>
-              )}
+            <div className="text-xs text-text-muted mt-1 tabular-nums">
+              ET {match.home_score_et} - {match.away_score_et}
+            </div>
+          )}
+          {match.home_score_pk !== null && (
+            <div className="text-xs text-accent font-semibold mt-0.5 tabular-nums">
+              Pen. {match.home_score_pk} - {match.away_score_pk}
             </div>
           )}
         </div>

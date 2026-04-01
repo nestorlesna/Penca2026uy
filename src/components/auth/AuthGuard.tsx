@@ -47,6 +47,15 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+/** Permite acceso a admin O cargador (solo pantalla de resultados) */
+export function RequireLoader({ children }: { children: React.ReactNode }) {
+  const { user, isAdmin, isLoader, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/auth" replace />
+  if (!isAdmin && !isLoader) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 /** Pantalla de bienvenida para el Trophy cup */
 export function WelcomeBanner() {
   return (

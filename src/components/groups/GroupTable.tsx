@@ -36,6 +36,8 @@ export function GroupTable({ standings, compact = false, onTeamClick }: Props) {
                 <th className="text-center pb-2 px-2">PG</th>
                 <th className="text-center pb-2 px-2">PE</th>
                 <th className="text-center pb-2 px-2">PP</th>
+                <th className="text-center pb-2 px-2">GF</th>
+                <th className="text-center pb-2 px-2">GC</th>
               </>
             )}
             <th className="text-center pb-2 px-2">GD</th>
@@ -82,6 +84,8 @@ export function GroupTable({ standings, compact = false, onTeamClick }: Props) {
                   <td className="py-2 px-2 text-center text-text-secondary">{row.pg}</td>
                   <td className="py-2 px-2 text-center text-text-secondary">{row.pe}</td>
                   <td className="py-2 px-2 text-center text-text-secondary">{row.pp}</td>
+                  <td className="py-2 px-2 text-center text-text-secondary">{row.gf}</td>
+                  <td className="py-2 px-2 text-center text-text-secondary">{row.gc}</td>
                 </>
               )}
 

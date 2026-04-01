@@ -143,6 +143,7 @@ export interface Profile {
   avatar_url: string | null
   is_active: boolean  // admin must approve
   is_admin: boolean
+  is_loader: boolean  // puede cargar resultados, sin acceso al resto del admin
   created_at: string
 }
 
@@ -198,6 +199,7 @@ export interface GroupStanding {
   group_name: string
   group_order: number
   position: number
+  has_override: boolean
   team_name: string
   team_abbreviation: string
   team_flag_url: string | null
@@ -218,6 +220,7 @@ export interface BestThirdRanking {
   group_id: string
   group_name: string
   rank: number
+  has_override: boolean
   team_name: string
   team_flag_url: string | null
   pj: number

@@ -5,7 +5,7 @@ import { PredictionModal } from '../components/predictions/PredictionModal'
 import { TeamFlag } from '../components/ui/TeamFlag'
 import { useMatches } from '../hooks/useMatches'
 import { useMyPredictionsMap, useMyPredictions } from '../hooks/usePredictions'
-import { matchStarted, formatMatchDay, formatMatchTime } from '../utils/datetime'
+import { formatMatchDay, formatMatchTime } from '../utils/datetime'
 import type { MatchWithRelations } from '../types/match'
 import type { PredictionWithMatch } from '../services/predictionService'
 
@@ -42,7 +42,7 @@ function PredecirTab() {
   const [selected, setSelected] = useState<MatchWithRelations | null>(null)
 
   const upcoming = useMemo(
-    () => matches.filter(m => !matchStarted(m.match_datetime)),
+    () => matches.filter(m => m.home_score_90 === null),
     [matches]
   )
 
@@ -97,7 +97,7 @@ function PredecirTab() {
                   </div>
                 </div>
                 <p className="text-[11px] text-text-muted">
-                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)} ET
+                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
                 </p>
               </div>
 
@@ -132,8 +132,9 @@ function HistorialTab() {
   const { data: preds = [], isLoading } = useMyPredictions()
 
   const past = useMemo(
-    () => preds.filter(p => matchStarted(p.match.match_datetime))
-       .sort((a, b) => new Date(b.match.match_datetime).getTime() - new Date(a.match.match_datetime).getTime()),
+    () => preds
+      .filter(p => p.match.home_score_90 !== null)
+      .sort((a, b) => new Date(b.match.match_datetime).getTime() - new Date(a.match.match_datetime).getTime()),
     [preds]
   )
 
@@ -171,7 +172,7 @@ function HistorialTab() {
 
       {past.map(pred => {
         const m = pred.match
-        const isFinished = m.status === 'finished'
+        const isFinished = m.home_score_90 !== null
         return (
           <div key={pred.id} className="card p-3 flex items-center gap-3">
             {/* Match info */}

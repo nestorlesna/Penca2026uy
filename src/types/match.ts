@@ -13,7 +13,7 @@ export interface MatchWithRelations {
   id: string
   match_number: number
   match_datetime: string          // ISO UTC
-  status: 'scheduled' | 'live' | 'finished'
+  status: 'scheduled' | 'finished'
   home_slot_label: string | null
   away_slot_label: string | null
   home_score_90: number | null

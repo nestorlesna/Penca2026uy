@@ -24,14 +24,15 @@ export async function fetchMatches(filters?: {
     .select(MATCH_SELECT)
     .order('match_datetime')
 
-  if (filters?.phaseOrder) {
-    // Filtrar por order de la fase
-    const { data: phase } = await supabase
+  if (filters?.phaseOrder !== undefined) {
+    // 'order' es palabra reservada en PostgREST, no se puede usar en .eq()
+    // Se traen todas las fases y se filtra en cliente
+    const { data: phasesData } = await supabase
       .from('phases')
-      .select('id')
-      .eq('order', filters.phaseOrder)
-      .single()
-    if (phase) query = query.eq('phase_id', (phase as { id: string }).id)
+      .select('id, order')
+    const phase = (phasesData as Array<{ id: string; order: number }> | null)
+      ?.find(p => p.order === filters.phaseOrder)
+    if (phase) query = query.eq('phase_id', phase.id)
   }
 
   if (filters?.groupName) {

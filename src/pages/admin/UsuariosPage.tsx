@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2, ShieldCheck, ShieldOff, UserCheck, UserX, Search } from 'lucide-react'
+import { Loader2, ShieldCheck, ShieldOff, UserCheck, UserX, Search, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import { RequireAdmin } from '../../components/auth/AuthGuard'
-import { fetchAllProfiles, setUserActive, setUserAdmin } from '../../services/profileService'
+import { fetchAllProfiles, setUserActive, setUserAdmin, setUserLoader } from '../../services/profileService'
 import { useAuth } from '../../hooks/useAuth'
 import type { Profile } from '../../types'
 
@@ -37,6 +37,12 @@ function UsuariosContent() {
     onError: () => toast.error('Error al actualizar'),
   })
 
+  const mutateLoader = useMutation({
+    mutationFn: ({ id, val }: { id: string; val: boolean }) => setUserLoader(id, val),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin_profiles'] }),
+    onError: () => toast.error('Error al actualizar'),
+  })
+
   const filtered = (profiles ?? []).filter(p =>
     p.username.includes(search.toLowerCase()) ||
     p.display_name.toLowerCase().includes(search.toLowerCase())
@@ -50,8 +56,8 @@ function UsuariosContent() {
         <div>
           <h1 className="text-xl font-bold text-text-primary">Usuarios</h1>
           {pending > 0 && (
-            <p className="text-xs text-accent mt-0.5">
-              {pending} usuario{pending > 1 ? 's' : ''} pendiente{pending > 1 ? 's' : ''} de aprobación
+            <p className="text-xs text-error mt-0.5">
+              {pending} usuario{pending > 1 ? 's' : ''} inactivo{pending > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -95,6 +101,10 @@ function UsuariosContent() {
                 mutateAdmin.mutate({ id: profile.id, val })
                 toast.success(val ? `${profile.username} es admin` : `${profile.username} ya no es admin`)
               }}
+              onToggleLoader={(val) => {
+                mutateLoader.mutate({ id: profile.id, val })
+                toast.success(val ? `${profile.username} es cargador` : `${profile.username} ya no es cargador`)
+              }}
             />
           ))}
         </div>
@@ -108,9 +118,10 @@ interface UserRowProps {
   isMe: boolean
   onToggleActive: (val: boolean) => void
   onToggleAdmin: (val: boolean) => void
+  onToggleLoader: (val: boolean) => void
 }
 
-function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps) {
+function UserRow({ profile, isMe, onToggleActive, onToggleAdmin, onToggleLoader }: UserRowProps) {
   const initials = (profile.display_name || profile.username)[0].toUpperCase()
 
   return (
@@ -130,6 +141,7 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
           <span className="text-sm font-medium text-text-primary truncate">{profile.display_name}</span>
           {isMe && <span className="badge bg-border text-text-muted text-[10px]">Yo</span>}
           {profile.is_admin && <span className="badge-accent text-[10px]">Admin</span>}
+          {profile.is_loader && !profile.is_admin && <span className="badge bg-primary/20 text-primary text-[10px]">Cargador</span>}
         </div>
         <p className="text-xs text-text-muted">@{profile.username}</p>
       </div>
@@ -138,7 +150,7 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
       <div className="flex items-center gap-1">
         {profile.is_active
           ? <span className="badge-primary text-[10px] hidden sm:inline-flex">Activo</span>
-          : <span className="badge bg-warning/20 text-warning text-[10px] hidden sm:inline-flex">Pendiente</span>
+          : <span className="badge bg-error/20 text-error text-[10px] hidden sm:inline-flex">Inactivo</span>
         }
       </div>
 
@@ -147,7 +159,7 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
         <div className="flex items-center gap-1">
           <button
             onClick={() => onToggleActive(!profile.is_active)}
-            title={profile.is_active ? 'Desactivar' : 'Activar'}
+            title={profile.is_active ? 'Inactivar usuario' : 'Activar usuario'}
             className={`p-2 rounded-lg transition-colors ${
               profile.is_active
                 ? 'text-text-muted hover:text-error hover:bg-error/10'
@@ -155,6 +167,18 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin }: UserRowProps)
             }`}
           >
             {profile.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
+          </button>
+
+          <button
+            onClick={() => onToggleLoader(!profile.is_loader)}
+            title={profile.is_loader ? 'Quitar cargador' : 'Hacer cargador'}
+            className={`p-2 rounded-lg transition-colors ${
+              profile.is_loader
+                ? 'text-primary hover:bg-error/10 hover:text-error'
+                : 'text-text-muted hover:text-primary hover:bg-primary/10'
+            }`}
+          >
+            <ClipboardList size={16} />
           </button>
 
           <button
