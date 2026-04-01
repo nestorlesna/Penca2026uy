@@ -338,7 +338,6 @@ export function PartidosAdminPage() {
               {/* Estado */}
               <div className="flex-shrink-0">
                 {match.status === 'finished' && <span className="badge bg-success/20 text-success text-[10px]">Final</span>}
-                {match.status === 'live' && <span className="badge bg-error/20 text-error text-[10px] animate-pulse">En vivo</span>}
                 {match.status === 'scheduled' && <span className="badge bg-border text-text-muted text-[10px]">Prog.</span>}
               </div>
             </button>

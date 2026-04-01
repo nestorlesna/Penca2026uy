@@ -25,10 +25,6 @@ export async function setMatchResult(matchId: string, result: MatchResultInput) 
   if (error) throw error
 }
 
-export async function setMatchStatus(matchId: string, status: 'scheduled' | 'live' | 'finished') {
-  const { error } = await supabase.from('matches').update({ status }).eq('id', matchId)
-  if (error) throw error
-}
 
 export async function calculateMatchPoints(matchId: string): Promise<number> {
   const { data, error } = await supabase.rpc('calculate_match_points', { p_match_id: matchId })

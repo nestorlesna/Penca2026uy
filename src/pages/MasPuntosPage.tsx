@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ChevronDown, ChevronUp, Lock, Trophy, Star, CheckCircle2, Circle } from 'lucide-react'
@@ -23,20 +23,80 @@ function TeamSelect({
   placeholder: string
   disabled: boolean
 }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = teams.find(t => t.id === value) ?? null
+
+  useEffect(() => {
+    if (!open) return
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [open])
+
+  function select(id: string | null) {
+    onChange(id)
+    setOpen(false)
+  }
+
   return (
-    <select
-      disabled={disabled}
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value || null)}
-      className="input text-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <option value="">{placeholder}</option>
-      {teams.map(t => (
-        <option key={t.id} value={t.id}>
-          {t.name} ({t.group_name})
-        </option>
-      ))}
-    </select>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(o => !o)}
+        className="input w-full flex items-center gap-2 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {selected ? (
+          <>
+            {selected.flag_url
+              ? <img src={selected.flag_url} alt={selected.abbreviation} className="w-5 h-4 rounded-sm object-cover flex-shrink-0" />
+              : <div className="w-5 h-4 rounded-sm bg-border flex items-center justify-center flex-shrink-0">
+                  <span className="text-[8px] text-text-muted font-bold">{selected.abbreviation}</span>
+                </div>
+            }
+            <span className="text-sm text-text-primary truncate flex-1">{selected.name}</span>
+            <span className="text-xs text-text-muted flex-shrink-0">{selected.group_name}</span>
+          </>
+        ) : (
+          <span className="text-sm text-text-muted flex-1">{placeholder}</span>
+        )}
+        <ChevronDown size={14} className="text-text-muted flex-shrink-0 ml-1" />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
+          <div className="max-h-56 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => select(null)}
+              className="w-full flex items-center px-3 py-2 text-sm text-text-muted hover:bg-border/40 transition-colors"
+            >
+              — sin respuesta —
+            </button>
+            {teams.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => select(t.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-border/40 transition-colors ${t.id === value ? 'bg-primary/10' : ''}`}
+              >
+                {t.flag_url
+                  ? <img src={t.flag_url} alt={t.abbreviation} className="w-5 h-4 rounded-sm object-cover flex-shrink-0" />
+                  : <div className="w-5 h-4 rounded-sm bg-border flex items-center justify-center flex-shrink-0">
+                      <span className="text-[8px] text-text-muted font-bold">{t.abbreviation}</span>
+                    </div>
+                }
+                <span className="text-sm text-text-primary flex-1 text-left truncate">{t.name}</span>
+                <span className="text-xs text-text-muted flex-shrink-0">{t.group_name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

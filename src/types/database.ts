@@ -198,6 +198,7 @@ export interface GroupStanding {
   group_name: string
   group_order: number
   position: number
+  has_override: boolean
   team_name: string
   team_abbreviation: string
   team_flag_url: string | null
@@ -218,6 +219,7 @@ export interface BestThirdRanking {
   group_id: string
   group_name: string
   rank: number
+  has_override: boolean
   team_name: string
   team_flag_url: string | null
   pj: number

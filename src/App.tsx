@@ -20,6 +20,8 @@ import { EquiposAdminPage } from './pages/admin/EquiposAdminPage'
 import { PartidosAdminPage } from './pages/admin/PartidosAdminPage'
 import { AuditoriaPage } from './pages/admin/AuditoriaPage'
 import { TercerosPage } from './pages/admin/TercerosPage'
+import { PosicionesGruposPage } from './pages/admin/PosicionesGruposPage'
+import { CombinacionesPage } from './pages/admin/CombinacionesPage'
 import { BracketPage } from './pages/BracketPage'
 import { MasPuntosPage } from './pages/MasPuntosPage'
 
@@ -55,6 +57,8 @@ export default function App() {
             <Route path="admin/auditoria"   element={<AuditoriaPage />} />
             <Route path="admin/partidos"    element={<PartidosAdminPage />} />
             <Route path="admin/terceros"    element={<TercerosPage />} />
+            <Route path="admin/posiciones-grupos" element={<PosicionesGruposPage />} />
+            <Route path="admin/combinaciones"     element={<CombinacionesPage />} />
             <Route path="*"                 element={<NotFoundPage />} />
           </Route>
         </Routes>

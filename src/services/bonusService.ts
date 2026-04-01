@@ -63,6 +63,18 @@ export async function fetchBonusConfig(): Promise<Record<string, number>> {
   return Object.fromEntries((data ?? []).map(r => [r.bonus_type, r.points]))
 }
 
+export async function updateBonusConfig(values: Record<string, number>): Promise<void> {
+  const rows = Object.entries(values).map(([bonus_type, points]) => ({ bonus_type, points }))
+  for (const row of rows) {
+    const { error } = await supabase
+      .from('bonus_config')
+      .update({ points: row.points })
+      .eq('bonus_type', row.bonus_type)
+      .eq('is_active', true)
+    if (error) throw error
+  }
+}
+
 export async function fetchBonusPrediction(userId: string): Promise<BonusPrediction | null> {
   const { data, error } = await supabase
     .from('bonus_predictions')
@@ -107,13 +119,16 @@ export async function fetchGroupOptions(): Promise<GroupOption[]> {
   return (data ?? []) as GroupOption[]
 }
 
-/** Devuelve true si el torneo ya empezó (hay algún partido no scheduled) */
+/** Devuelve true si el torneo ya empezó (la fecha del primer partido ya pasó) */
 export async function isTournamentStarted(): Promise<boolean> {
-  const { count } = await supabase
+  const { data } = await supabase
     .from('matches')
-    .select('id', { count: 'exact', head: true })
-    .neq('status', 'scheduled')
-  return (count ?? 0) > 0
+    .select('match_datetime')
+    .order('match_datetime', { ascending: true })
+    .limit(1)
+    .single()
+  if (!data?.match_datetime) return false
+  return new Date(data.match_datetime) <= new Date()
 }
 
 // ── Save ──────────────────────────────────────────────────────────────────────

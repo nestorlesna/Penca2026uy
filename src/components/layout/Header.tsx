@@ -99,6 +99,8 @@ export function Header() {
                         <Link to="/admin/partidos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos</Link>
                         <Link to="/admin/equipos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Equipos</Link>
                         <Link to="/admin/terceros" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Terceros</Link>
+                        <Link to="/admin/posiciones-grupos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Posiciones grupos</Link>
+                        <Link to="/admin/combinaciones" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Combinaciones 16avos</Link>
                         <Link to="/admin/auditoria" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Auditoría</Link>
                         <Link to="/admin/config" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Configuración</Link>
                       </>
@@ -146,6 +148,8 @@ export function Header() {
             {isAdmin && <MobileNavLink to="/admin/partidos">Admin · Partidos</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/equipos">Admin · Equipos</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/terceros">Admin · Terceros</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/posiciones-grupos">Admin · Posiciones grupos</MobileNavLink>}
+            {isAdmin && <MobileNavLink to="/admin/combinaciones">Admin · Combinaciones 16avos</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
             {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}

@@ -42,7 +42,7 @@ function PredecirTab() {
   const [selected, setSelected] = useState<MatchWithRelations | null>(null)
 
   const upcoming = useMemo(
-    () => matches.filter(m => m.status === 'scheduled'),
+    () => matches.filter(m => m.home_score_90 === null),
     [matches]
   )
 
@@ -133,7 +133,7 @@ function HistorialTab() {
 
   const past = useMemo(
     () => preds
-      .filter(p => p.match.status === 'live' || p.match.status === 'finished')
+      .filter(p => p.match.home_score_90 !== null)
       .sort((a, b) => new Date(b.match.match_datetime).getTime() - new Date(a.match.match_datetime).getTime()),
     [preds]
   )
@@ -172,7 +172,7 @@ function HistorialTab() {
 
       {past.map(pred => {
         const m = pred.match
-        const isFinished = m.status === 'finished'
+        const isFinished = m.home_score_90 !== null
         return (
           <div key={pred.id} className="card p-3 flex items-center gap-3">
             {/* Match info */}

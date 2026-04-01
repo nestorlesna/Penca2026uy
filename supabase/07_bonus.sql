@@ -118,6 +118,9 @@ ALTER TABLE bonus_config            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bonus_predictions_audit ENABLE ROW LEVEL SECURITY;
 
 -- bonus_config: todos leen, solo admin escribe
+GRANT SELECT           ON public.bonus_config TO anon, authenticated;
+GRANT UPDATE           ON public.bonus_config TO authenticated;
+
 CREATE POLICY "bonus_config_public_read"  ON bonus_config FOR SELECT USING (true);
 CREATE POLICY "bonus_config_admin_write"  ON bonus_config FOR ALL
   USING ((SELECT is_admin FROM profiles WHERE id = auth.uid()));
