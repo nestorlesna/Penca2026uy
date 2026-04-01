@@ -202,7 +202,7 @@ function PodioResultado({
   return (
     <div className="mt-4 space-y-2">
       <p className="text-[11px] text-text-muted uppercase tracking-wide font-semibold">Podio real</p>
-      {slots.map(({ key, emoji, label }) => {
+      {slots.map(({ key, emoji }) => {
         const actualTeam = teamById(detail.actual[key] ?? null)
         const predTeam   = teamById(detail.predicted[key] ?? null)
         const slotPts    = pointsForSlot(key)
@@ -293,7 +293,7 @@ function PodioSection({
   return (
     <BonusSection
       title="Podio del torneo" icon="🏆"
-      pointsAvail={descr} earned={earned} locked={locked} defaultOpen
+      pointsAvail={descr} earnedPts={earned} locked={locked} defaultOpen
     >
       <div className="space-y-3">
         {positions.map(({ label, val, set }) => (
@@ -349,7 +349,7 @@ function EmpatesSection({
       title="Empates en fase de grupos"
       icon="🤝"
       pointsAvail={`${pts(puntos)} si aciertas cuántos empates hay en los 72 partidos de grupos`}
-      earned={earned}
+      earnedPts={earned}
       locked={locked}
     >
       <div className="space-y-3">
@@ -413,7 +413,7 @@ function RangoGolesSection({
       title="Rango de goles del torneo"
       icon="⚽"
       pointsAvail={`${pts(puntos)} si aciertas el rango de goles totales (90' + tiempo extra, sin penales)`}
-      earned={earned}
+      earnedPts={earned}
       locked={locked}
     >
       <div className="space-y-3">
@@ -486,7 +486,7 @@ function FinalCeroSection({
       title="¿Habrá 0-0 en la Final?"
       icon="🎯"
       pointsAvail={`${pts(puntos)} si aciertas si la Final termina 0-0 a los 90'`}
-      earned={earned}
+      earnedPts={earned}
       locked={locked}
     >
       <div className="space-y-2">
@@ -559,7 +559,7 @@ function TopScorerTeamSection({
       title="Equipo con más goles"
       icon="🔥"
       pointsAvail={`${pts(puntos)} si aciertas qué equipo hace más goles (90' + tiempo extra, sin penales)`}
-      earned={earned}
+      earnedPts={earned}
       locked={locked}
     >
       <div className="space-y-3">
@@ -620,7 +620,7 @@ function TopGroupSection({
       title="Grupo con más goles"
       icon="📊"
       pointsAvail={`${pts(puntos)} si aciertas qué grupo hace más goles en la fase de grupos`}
-      earned={earned}
+      earnedPts={earned}
       locked={locked}
     >
       <div className="space-y-3">

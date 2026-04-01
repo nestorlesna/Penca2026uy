@@ -12,7 +12,6 @@ import {
   RIVAL_COLS,
   type Combinacion,
 } from '../../services/combinacionesService'
-import type { BestThirdRanking } from '../../types/database'
 
 // ── Calcular clave activa desde los mejores terceros ─────────────────────────
 async function fetchActiveKey(): Promise<string | null> {

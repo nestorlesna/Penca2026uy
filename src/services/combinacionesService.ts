@@ -11,6 +11,7 @@ export interface Combinacion {
   rival_1i: string
   rival_1k: string
   rival_1l: string
+  [key: string]: string | number
 }
 
 export const RIVAL_COLS = [
