@@ -1,9 +1,24 @@
 import { useState, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 import { MatchCard } from '../components/matches/MatchCard'
+import { StadiumModal } from '../components/ui/StadiumModal'
 import { useMatches } from '../hooks/useMatches'
+import { fetchStadium } from '../services/matchService'
 import { matchDateKey, formatMatchDayFull } from '../utils/datetime'
 import { GROUPS } from '../utils/constants'
+
+interface StadiumModalData {
+  id: string
+  name: string
+  city: string
+  country: string
+  address: string | null
+  capacity: number | null
+  photo_urls: string[]
+  latitude: number | null
+  longitude: number | null
+  timezone: string
+}
 
 // Fases disponibles en el selector
 const PHASE_TABS = [
@@ -20,10 +35,20 @@ const PHASE_TABS = [
 export function FixturePage() {
   const [phaseOrder, setPhaseOrder] = useState<number | undefined>(undefined)
   const [groupName, setGroupName] = useState<string | undefined>(undefined)
+  const [stadiumModalOpen, setStadiumModalOpen] = useState(false)
+  const [selectedStadium, setSelectedStadium] = useState<StadiumModalData | null>(null)
 
   const { data: matches, isLoading, error } = useMatches(
     { phaseOrder, groupName }
   )
+
+  const handleStadiumClick = async (stadiumId: string) => {
+    const stadium = await fetchStadium(stadiumId)
+    if (stadium) {
+      setSelectedStadium(stadium)
+      setStadiumModalOpen(true)
+    }
+  }
 
   // Agrupar partidos por fecha
   const groupedByDate = useMemo(() => {
@@ -131,13 +156,19 @@ export function FixturePage() {
               </h2>
               <div className="space-y-3">
                 {dayMatches.map((match) => (
-                  <MatchCard key={match.id} match={match} />
+                  <MatchCard key={match.id} match={match} onStadiumClick={handleStadiumClick} />
                 ))}
               </div>
             </section>
           ))}
         </div>
       )}
+
+      <StadiumModal
+        open={stadiumModalOpen}
+        onClose={() => setStadiumModalOpen(false)}
+        stadium={selectedStadium}
+      />
     </div>
   )
 }

@@ -58,3 +58,13 @@ export async function fetchMatchByNumber(matchNumber: number): Promise<MatchWith
   if (error) return null
   return data as unknown as MatchWithRelations
 }
+
+export async function fetchStadium(id: string) {
+  const { data, error } = await supabase
+    .from('stadiums')
+    .select('id, name, city, country, address, capacity, photo_urls, latitude, longitude, timezone')
+    .eq('id', id)
+    .single()
+  if (error) return null
+  return data
+}
