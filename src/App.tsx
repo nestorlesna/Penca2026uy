@@ -24,6 +24,8 @@ import { PosicionesGruposPage } from './pages/admin/PosicionesGruposPage'
 import { CombinacionesPage } from './pages/admin/CombinacionesPage'
 import { BracketPage } from './pages/BracketPage'
 import { MasPuntosPage } from './pages/MasPuntosPage'
+import { SubgruposPage } from './pages/SubgruposPage'
+import { SubgrupoDetailPage } from './pages/SubgrupoDetailPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +51,8 @@ export default function App() {
             <Route path="ayuda"             element={<AyudaPage />} />
             <Route path="cuadro"            element={<BracketPage />} />
             <Route path="mas-puntos"        element={<MasPuntosPage />} />
+            <Route path="subgrupos"         element={<SubgruposPage />} />
+            <Route path="subgrupos/:id"     element={<SubgrupoDetailPage />} />
             {/* Admin */}
             <Route path="admin/usuarios"    element={<UsuariosPage />} />
             <Route path="admin/resultados"  element={<ResultadosPage />} />

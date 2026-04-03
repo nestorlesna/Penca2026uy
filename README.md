@@ -15,6 +15,7 @@ Aplicación web de predicciones para la Copa Mundial de Fútbol FIFA 2026. Los u
 - **Mis apuestas** — historial de predicciones y puntos ganados por partido
 - **+ Puntos** — apuestas especiales antes del torneo (podio, empates, rango de goles, etc.) con resultado real y puntos ganados visibles por sección
 - **Ranking** — tabla de líderes global con puntos totales (partidos + bonus)
+- **Subgrupos** — agrupaciones privadas entre jugadores con ranking propio (cada usuario puede crear hasta 3)
 - **Ayuda** — reglas detalladas con ejemplos dinámicos según la config activa
 
 ### Para administradores
@@ -25,6 +26,7 @@ Aplicación web de predicciones para la Copa Mundial de Fútbol FIFA 2026. Los u
 - **Usuarios** — aprobación y activación/desactivación de usuarios
 - **Auditoría** — historial de cambios en predicciones con filtros
 - **Configuración** — puntajes parametrizables para todos los tipos de acierto y bonus
+- **Subgrupos** — habilitar/deshabilitar o eliminar subgrupos creados por usuarios
 
 ---
 
@@ -82,6 +84,8 @@ supabase/07_bonus.sql            # Tablas y función de apuestas especiales (+Pu
 supabase/08_group_overrides.sql  # Overrides admin para posiciones y terceros
 supabase/09_combinaciones.sql    # 495 combinaciones FIFA de mejores terceros
 supabase/10_recalculate_all.sql  # Función de recálculo global
+supabase/11_loader_role.sql      # Rol de cargador de resultados
+supabase/12_subgrupos.sql        # Tablas, RLS, funciones y vistas de subgrupos
 supabase/00_reset_init.sql       # Carga datos del torneo (grupos, equipos, partidos, etc.)
 ```
 
@@ -169,6 +173,8 @@ src/
 │   ├── RankingPage.tsx
 │   ├── MasPuntosPage.tsx      # /mas-puntos
 │   ├── MisPrediccionesPage.tsx
+│   ├── SubgruposPage.tsx      # /subgrupos
+│   ├── SubgrupoDetailPage.tsx # /subgrupos/:id
 │   ├── AyudaPage.tsx
 │   └── admin/
 │       ├── ResultadosPage.tsx
@@ -187,7 +193,8 @@ src/
 │   ├── leaderboardService.ts
 │   ├── auditService.ts
 │   ├── teamService.ts
-│   └── groupService.ts
+│   ├── groupService.ts
+│   └── subgrupoService.ts
 ├── hooks/                     # useAuth, usePredictions, useStandings, etc.
 ├── types/                     # Interfaces TypeScript
 └── lib/supabase.ts            # Cliente Supabase singleton
@@ -207,7 +214,9 @@ supabase/
 ├── 08_group_overrides.sql     # group_position_overrides, best_third_rank_overrides,
 │                              #   vistas group_standings/best_third_ranking actualizadas
 ├── 09_combinaciones.sql       # 495 combinaciones FIFA de mejores terceros
-└── 10_recalculate_all.sql     # recalculate_all() — recálculo global idempotente
+├── 10_recalculate_all.sql     # recalculate_all() — recálculo global idempotente
+├── 11_loader_role.sql         # Rol de cargador de resultados
+└── 12_subgrupos.sql           # subgrupos, subgrupo_members, RLS, RPC, triggers, vistas
 ```
 
 ---

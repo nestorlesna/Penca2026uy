@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, LayoutGrid, Trophy, Star, User } from 'lucide-react'
+import { Calendar, LayoutGrid, Trophy, Star, User, Users } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 const navItems = [
   { to: '/fixture', icon: Calendar, label: 'Fixture' },
   { to: '/grupos', icon: LayoutGrid, label: 'Grupos' },
   { to: '/ranking', icon: Trophy, label: 'Ranking' },
-  { to: '/mis-predicciones', icon: Star, label: 'Mis apuestas', authRequired: true },
+  { to: '/subgrupos', icon: Users, label: 'Subgrupos', authRequired: true },
+  { to: '/mis-predicciones', icon: Star, label: 'Apuestas', authRequired: true },
   { to: '/perfil', icon: User, label: 'Perfil', authRequired: true },
 ]
 

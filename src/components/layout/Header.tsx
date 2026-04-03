@@ -47,22 +47,13 @@ export function Header() {
             <DeskNavLink to="/fixture">Fixture</DeskNavLink>
             <DeskNavLink to="/grupos">Grupos</DeskNavLink>
             <DeskNavLink to="/ranking">Ranking</DeskNavLink>
+            {user && <DeskNavLink to="/subgrupos">Subgrupos</DeskNavLink>}
             <DeskNavLink to="/cuadro">Cuadro</DeskNavLink>
-            {user && <DeskNavLink to="/mis-predicciones">Mis apuestas</DeskNavLink>}
+            {user && <DeskNavLink to="/mis-predicciones">Apuestas</DeskNavLink>}
             {user && <DeskNavLink to="/mas-puntos">+ Puntos</DeskNavLink>}
             <DeskNavLink to="/ayuda">
               <HelpCircle size={14} className="inline mr-1" />Ayuda
             </DeskNavLink>
-            {isAdmin && (
-              <DeskNavLink to="/admin/usuarios">
-                <ShieldCheck size={14} className="inline mr-1" />Admin
-              </DeskNavLink>
-            )}
-            {!isAdmin && isLoader && (
-              <DeskNavLink to="/admin/resultados">
-                <ShieldCheck size={14} className="inline mr-1" />Resultados
-              </DeskNavLink>
-            )}
           </nav>
 
           {/* Derecha: usuario o botón ingresar */}
@@ -153,21 +144,12 @@ export function Header() {
             <MobileNavLink to="/fixture">Fixture</MobileNavLink>
             <MobileNavLink to="/grupos">Grupos</MobileNavLink>
             <MobileNavLink to="/ranking">Ranking</MobileNavLink>
+            {user && <MobileNavLink to="/subgrupos">Subgrupos</MobileNavLink>}
             <MobileNavLink to="/cuadro">Cuadro</MobileNavLink>
-            {user && <MobileNavLink to="/mis-predicciones">Mis apuestas</MobileNavLink>}
+            {user && <MobileNavLink to="/mis-predicciones">Apuestas</MobileNavLink>}
             {user && <MobileNavLink to="/mas-puntos">+ Puntos</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
             <MobileNavLink to="/ayuda">Ayuda · Puntaje</MobileNavLink>
-            {isAdmin && <MobileNavLink to="/admin/usuarios">Admin · Usuarios</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/resultados">Admin · Resultados</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/partidos">Admin · Partidos</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/equipos">Admin · Equipos</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/terceros">Admin · Terceros</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/posiciones-grupos">Admin · Posiciones grupos</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/combinaciones">Admin · Combinaciones 16avos</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/auditoria">Admin · Auditoría</MobileNavLink>}
-            {isAdmin && <MobileNavLink to="/admin/config">Admin · Config</MobileNavLink>}
-            {!isAdmin && isLoader && <MobileNavLink to="/admin/resultados">Resultados</MobileNavLink>}
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}
           </nav>
         </div>

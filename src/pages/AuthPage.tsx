@@ -1,8 +1,60 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Trophy, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Trophy, Loader2, Eye, EyeOff, Clock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { Captcha } from '../components/ui/Captcha'
+
+const TOURNAMENT_START = new Date('2026-06-11T00:00:00Z').getTime()
+
+function CountdownTimer() {
+  const [timeLeft, setTimeLeft] = useState(() => TOURNAMENT_START - Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(TOURNAMENT_START - Date.now())
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (timeLeft <= 0) return null
+
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
+
+  const blocks = [
+    { value: days, label: 'días' },
+    { value: hours, label: 'horas' },
+    { value: minutes, label: 'min' },
+    { value: seconds, label: 'seg' },
+  ]
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-center gap-1.5 text-text-muted text-sm mb-3">
+        <Clock size={14} />
+        <span>Arranca el Mundial</span>
+      </div>
+      <div className="flex justify-center gap-2">
+        {blocks.map((b) => (
+          <div
+            key={b.label}
+            className="bg-surface border border-border rounded-lg px-3 py-2 min-w-[52px] text-center"
+          >
+            <div className="text-xl font-bold text-text-primary tabular-nums">
+              {String(b.value).padStart(2, '0')}
+            </div>
+            <div className="text-[10px] text-text-muted uppercase tracking-wide">
+              {b.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 type Tab = 'login' | 'register'
 
@@ -19,6 +71,7 @@ export function AuthPage() {
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [username, setUsername] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   // Si ya está logueado y activo, redirigir
   if (user && isActive) return <Navigate to="/fixture" replace />
@@ -26,8 +79,12 @@ export function AuthPage() {
   async function handleLogin(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!captchaToken) {
+      setError('Por favor completá la verificación de seguridad.')
+      return
+    }
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
     if (error) setError(traducirError(error.message))
     setLoading(false)
   }
@@ -35,6 +92,10 @@ export function AuthPage() {
   async function handleRegister(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!captchaToken) {
+      setError('Por favor completá la verificación de seguridad.')
+      return
+    }
     setLoading(true)
 
     if (username.length < 3) {
@@ -53,6 +114,7 @@ export function AuthPage() {
       password,
       options: {
         data: { username, full_name: displayName },
+        captchaToken,
       },
     })
 
@@ -61,6 +123,7 @@ export function AuthPage() {
     } else {
       setSuccess('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.')
       setEmail(''); setPassword(''); setDisplayName(''); setUsername('')
+      setCaptchaToken(null)
     }
     setLoading(false)
   }
@@ -84,7 +147,7 @@ export function AuthPage() {
             {(['login', 'register'] as Tab[]).map(t => (
               <button
                 key={t}
-                onClick={() => { setTab(t); setError(null); setSuccess(null) }}
+                onClick={() => { setTab(t); setError(null); setSuccess(null); setCaptchaToken(null) }}
                 className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   tab === t
                     ? 'bg-surface text-text-primary shadow-sm'
@@ -191,12 +254,25 @@ export function AuthPage() {
             </button>
           </form>
 
+          <div className="mt-4">
+            <Captcha
+              onSuccess={token => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+              onError={() => {
+                setError('Error al cargar la verificación de seguridad.')
+                setCaptchaToken(null)
+              }}
+            />
+          </div>
+
           {tab === 'register' && (
             <p className="text-[11px] text-text-muted text-center mt-4">
               Tu cuenta requiere aprobación del administrador antes de poder predecir.
             </p>
           )}
         </div>
+
+        <CountdownTimer />
       </div>
     </div>
   )

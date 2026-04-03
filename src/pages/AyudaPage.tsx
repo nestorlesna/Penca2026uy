@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, HelpCircle, Target, Trophy, Zap, Clock, Shield, Star } from 'lucide-react'
+import { Loader2, HelpCircle, Target, Trophy, Zap, Clock, Shield, Star, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { fetchScoringConfig } from '../services/adminService'
 import { fetchBonusConfig } from '../services/bonusService'
@@ -517,6 +517,64 @@ export function AyudaPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── SUBGRUPOS ── */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest flex items-center gap-2">
+          <span className="w-5 h-px bg-border inline-block" />
+          Subgrupos
+          <span className="flex-1 h-px bg-border inline-block" />
+        </h2>
+
+        <div className="card p-4 space-y-3">
+          <p className="text-sm text-text-secondary leading-relaxed">
+            Los subgrupos son agrupaciones que podés crear para competir con amigos dentro del ranking general.
+            Cada subgrupo tiene su propio ranking basado en los puntos de sus miembros.
+          </p>
+
+          <div className="space-y-2">
+            {[
+              {
+                icon: '👤',
+                title: 'Crear un subgrupo',
+                desc: 'Cualquier jugador puede crear hasta 3 subgrupos. Elegí un nombre y empezá a sumar gente.',
+              },
+              {
+                icon: '👥',
+                title: 'Agregar miembros',
+                desc: 'Como creador, podés invitar a cualquier usuario activo desde el combo de búsqueda. Ellos verán el subgrupo en su lista.',
+              },
+              {
+                icon: '📊',
+                title: 'Ranking propio',
+                desc: 'Cada subgrupo muestra el ranking de sus miembros ordenados por puntos totales. Se muestra también el ranking global de cada uno.',
+              },
+              {
+                icon: '🚪',
+                title: 'Salir de un subgrupo',
+                desc: 'Si te agregaron a un subgrupo, podés salir cuando quieras. El creador también puede eliminarte.',
+              },
+              {
+                icon: '🛡️',
+                title: 'Moderación',
+                desc: 'El administrador puede eliminar cualquier subgrupo que no respete las normas básicas de convivencia.',
+              },
+            ].map(({ icon, title, desc }) => (
+              <div key={title} className="flex gap-3">
+                <span className="text-lg flex-shrink-0">{icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{title}</p>
+                  <p className="text-[12px] text-text-muted mt-0.5 leading-relaxed">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link to="/subgrupos" className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1 justify-center w-fit">
+            <Users size={14} /> Ir a Subgrupos
+          </Link>
         </div>
       </section>
 
