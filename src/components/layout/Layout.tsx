@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
 import { Header } from './Header'
+import { Footer } from './Footer'
 
 export function Layout() {
   return (
@@ -12,6 +13,7 @@ export function Layout() {
         </div>
       </main>
       <BottomNav />
+      <Footer />
     </div>
   )
 }

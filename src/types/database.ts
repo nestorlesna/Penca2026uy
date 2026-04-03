@@ -244,3 +244,32 @@ export interface LeaderboardEntry {
   correct_winners: number
   rank: number
 }
+
+// --- Subgrupos ---
+
+export interface Subgrupo {
+  id: string
+  name: string
+  creator_id: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface SubgrupoMember {
+  subgrupo_id: string
+  user_id: string
+  joined_at: string
+}
+
+export interface SubgrupoRankingEntry {
+  subgrupo_id: string
+  user_id: string
+  total_points: number
+  global_rank: number
+  predictions_count: number
+  exact_scores: number
+  display_name: string
+  username: string
+  avatar_url: string | null
+  subgrupo_rank: number
+}

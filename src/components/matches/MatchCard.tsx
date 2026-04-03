@@ -1,4 +1,4 @@
-import { MapPin } from 'lucide-react'
+import { MapPin, Users } from 'lucide-react'
 import { TeamFlag } from '../ui/TeamFlag'
 import { formatMatchTime, formatMatchDay } from '../../utils/datetime'
 import type { MatchWithRelations } from '../../types/match'
@@ -6,9 +6,11 @@ import type { MatchWithRelations } from '../../types/match'
 interface Props {
   match: MatchWithRelations
   onClick?: () => void
+  onStadiumClick?: (stadiumId: string) => void
+  onPredictionsClick?: (matchId: string) => void
 }
 
-export function MatchCard({ match, onClick }: Props) {
+export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick }: Props) {
   const hasScore = match.home_score_90 !== null && match.away_score_90 !== null
 
   const homeWon = hasScore && match.winner_team_id === match.home_team?.id
@@ -36,7 +38,16 @@ export function MatchCard({ match, onClick }: Props) {
         </div>
 
         {hasScore ? (
-          <span className="text-text-muted text-xs">Finalizado</span>
+          <button
+            className="flex items-center gap-1 text-text-muted text-xs hover:text-primary transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              onPredictionsClick?.(match.id)
+            }}
+          >
+            <Users size={12} />
+            <span>Ver apuestas</span>
+          </button>
         ) : (
           <span className="text-text-secondary text-xs">
             {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
@@ -97,7 +108,13 @@ export function MatchCard({ match, onClick }: Props) {
       </div>
 
       {/* Estadio */}
-      <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+      <div
+        className="flex items-center gap-1 mt-3 pt-3 border-t border-border cursor-pointer hover:text-text-secondary transition-colors"
+        onClick={(e) => {
+          e.stopPropagation()
+          onStadiumClick?.(match.stadium.id)
+        }}
+      >
         <MapPin size={11} className="text-text-muted flex-shrink-0" />
         <span className="text-[11px] text-text-muted truncate">
           {match.stadium.name} · {match.stadium.city}

@@ -18,7 +18,9 @@
       "WebFetch(domain:sports.yahoo.com)",
       "WebFetch(domain:www.nbcsports.com)",
       "WebFetch(domain:www.cbssports.com)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(grep -n \"best_third_ranking\" /c/DATOS/DESARROLLOS/React/Penca2026uy/supabase/*.sql)",
+      "Bash(grep:*)"
     ]
   }
 }

@@ -1,9 +1,27 @@
 import { useState, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 import { MatchCard } from '../components/matches/MatchCard'
+import { StadiumModal } from '../components/ui/StadiumModal'
+import { PredictionsSummaryModal } from '../components/ui/PredictionsSummaryModal'
 import { useMatches } from '../hooks/useMatches'
+import { fetchStadium } from '../services/matchService'
+import { fetchMatchPredictionsSummary } from '../services/predictionService'
 import { matchDateKey, formatMatchDayFull } from '../utils/datetime'
 import { GROUPS } from '../utils/constants'
+import type { PredictionSummary } from '../services/predictionService'
+
+interface StadiumModalData {
+  id: string
+  name: string
+  city: string
+  country: string
+  address: string | null
+  capacity: number | null
+  photo_urls: string[]
+  latitude: number | null
+  longitude: number | null
+  timezone: string
+}
 
 // Fases disponibles en el selector
 const PHASE_TABS = [
@@ -20,10 +38,46 @@ const PHASE_TABS = [
 export function FixturePage() {
   const [phaseOrder, setPhaseOrder] = useState<number | undefined>(undefined)
   const [groupName, setGroupName] = useState<string | undefined>(undefined)
+  const [stadiumModalOpen, setStadiumModalOpen] = useState(false)
+  const [selectedStadium, setSelectedStadium] = useState<StadiumModalData | null>(null)
+  const [predictionsModalOpen, setPredictionsModalOpen] = useState(false)
+  const [selectedMatch, setSelectedMatch] = useState<{
+    id: string
+    homeTeam: string
+    awayTeam: string
+    homeScore: number | null
+    awayScore: number | null
+    summary: PredictionSummary[]
+    totalPredictions: number
+  } | null>(null)
 
   const { data: matches, isLoading, error } = useMatches(
     { phaseOrder, groupName }
   )
+
+  const handleStadiumClick = async (stadiumId: string) => {
+    const stadium = await fetchStadium(stadiumId)
+    if (stadium) {
+      setSelectedStadium(stadium)
+      setStadiumModalOpen(true)
+    }
+  }
+
+  const handlePredictionsClick = async (matchId: string) => {
+    const match = matches?.find(m => m.id === matchId)
+    if (!match) return
+    const { summary, totalPredictions } = await fetchMatchPredictionsSummary(matchId)
+    setSelectedMatch({
+      id: matchId,
+      homeTeam: match.home_team?.name ?? match.home_slot_label ?? '?',
+      awayTeam: match.away_team?.name ?? match.away_slot_label ?? '?',
+      homeScore: match.home_score_90,
+      awayScore: match.away_score_90,
+      summary,
+      totalPredictions,
+    })
+    setPredictionsModalOpen(true)
+  }
 
   // Agrupar partidos por fecha
   const groupedByDate = useMemo(() => {
@@ -131,12 +185,31 @@ export function FixturePage() {
               </h2>
               <div className="space-y-3">
                 {dayMatches.map((match) => (
-                  <MatchCard key={match.id} match={match} />
+                  <MatchCard key={match.id} match={match} onStadiumClick={handleStadiumClick} onPredictionsClick={handlePredictionsClick} />
                 ))}
               </div>
             </section>
           ))}
         </div>
+      )}
+
+      <StadiumModal
+        open={stadiumModalOpen}
+        onClose={() => setStadiumModalOpen(false)}
+        stadium={selectedStadium}
+      />
+
+      {selectedMatch && (
+        <PredictionsSummaryModal
+          open={predictionsModalOpen}
+          onClose={() => setPredictionsModalOpen(false)}
+          homeTeam={selectedMatch.homeTeam}
+          awayTeam={selectedMatch.awayTeam}
+          homeScore={selectedMatch.homeScore}
+          awayScore={selectedMatch.awayScore}
+          summary={selectedMatch.summary}
+          totalPredictions={selectedMatch.totalPredictions}
+        />
       )}
     </div>
   )
