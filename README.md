@@ -341,6 +341,72 @@ npx cap sync
 
 ---
 
+## Distribución de actualizaciones (sin Play Store)
+
+La app verifica automáticamente si hay una versión nueva al iniciar. Si la hay, muestra un modal con un botón para descargar el APK directamente desde GitHub Releases.
+
+El chequeo compara el `versionCode` del APK instalado con el valor en [`version.json`](./version.json) (en la raíz del repo, servido vía `raw.githubusercontent.com`).
+
+### Pasos para publicar una nueva versión
+
+**1. Actualizar el número de versión en el código**
+
+Editar `android/app/build.gradle`:
+
+```groovy
+versionCode 2          // ← incrementar siempre (entero)
+versionName "1.1.0"    // ← string visible para el usuario
+```
+
+**2. Actualizar `version.json`**
+
+Editar la raíz del repo con los nuevos datos:
+
+```json
+{
+  "version_code": 2,
+  "version_name": "1.1.0",
+  "apk_url": "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.1.0/Penca2026uy.apk",
+  "release_notes": "Descripción de los cambios de esta versión.",
+  "force_update": false
+}
+```
+
+> Cambiar `force_update` a `true` si la versión es obligatoria (el modal no tendrá botón de cerrar).
+
+**3. Generar el APK firmado**
+
+```bash
+npm run cap:sync
+cd android
+./gradlew assembleRelease
+# En Windows: gradlew.bat assembleRelease
+```
+
+O desde Android Studio: **Build → Generate Signed Bundle / APK → APK → Release**
+
+El APK queda en `android/app/build/outputs/apk/release/`.
+
+**4. Hacer commit y push**
+
+```bash
+git add android/app/build.gradle version.json
+git commit -m "chore: bump version to v1.1.0"
+git push
+```
+
+**5. Crear el Release en GitHub**
+
+1. Ir a [github.com/nestorlesna/Penca2026uy/releases/new](https://github.com/nestorlesna/Penca2026uy/releases/new)
+2. Tag: `v1.1.0`
+3. Título: `PencaLes 2026 v1.1.0`
+4. Subir el APK como asset (arrastrar el archivo)
+5. Click en **Publish release**
+
+A partir de ese momento, los usuarios con la versión anterior verán el modal de actualización al abrir la app.
+
+---
+
 ## Licencia
 
 Proyecto privado · Todos los derechos reservados · 2025-2026

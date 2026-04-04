@@ -26,6 +26,7 @@ import { BracketPage } from './pages/BracketPage'
 import { MasPuntosPage } from './pages/MasPuntosPage'
 import { SubgruposPage } from './pages/SubgruposPage'
 import { SubgrupoDetailPage } from './pages/SubgrupoDetailPage'
+import { DescargarAppPage } from './pages/DescargarAppPage'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
 import { UpdateModal } from './components/ui/UpdateModal'
 
@@ -51,6 +52,7 @@ function AppContent() {
             <Route path="ranking"           element={<RankingPage />} />
             <Route path="mis-predicciones"  element={<MisPrediccionesPage />} />
             <Route path="perfil"            element={<PerfilPage />} />
+            <Route path="descargar"         element={<DescargarAppPage />} />
             <Route path="auth"              element={<AuthPage />} />
             <Route path="ayuda"             element={<AyudaPage />} />
             <Route path="cuadro"            element={<BracketPage />} />
