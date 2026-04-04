@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, HelpCircle, Target, Trophy, Zap, Clock, Shield, Star, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -14,6 +15,296 @@ interface ScoringConfig {
   knockout_exact_score_bonus: number
   correct_et_result_points: number
   correct_pk_winner_points: number
+}
+
+// ── Calculadora de puntos interactiva ────────────────────────────────────────
+function ScoreCalculator({ cfg }: { cfg: ScoringConfig }) {
+  const [isGroup, setIsGroup] = useState(true)
+  const [predHome, setPredHome] = useState(2)
+  const [predAway, setPredAway] = useState(1)
+  const [realHome, setRealHome] = useState(2)
+  const [realAway, setRealAway] = useState(1)
+  const [predEtHome, setPredEtHome] = useState(0)
+  const [predEtAway, setPredEtAway] = useState(0)
+  const [realEtHome, setRealEtHome] = useState(0)
+  const [realEtAway, setRealEtAway] = useState(0)
+  const [predPkWinner, setPredPkWinner] = useState<'home' | 'away'>('home')
+  const [realPkWinner, setRealPkWinner] = useState<'home' | 'away'>('home')
+
+  const predDraw = predHome === predAway
+  const realDraw = realHome === realAway
+  const exactScore = predHome === realHome && predAway === realAway
+  const correctWinner = (!predDraw && !realDraw &&
+    ((predHome > predAway && realHome > realAway) ||
+     (predHome < predAway && realHome < realAway)))
+  const correctDraw = predDraw && realDraw
+
+  let points = 0
+  let breakdown: { label: string; pts: number }[] = []
+
+  if (exactScore) {
+    const pts = cfg.exact_score_points + (!isGroup ? cfg.knockout_exact_score_bonus : 0)
+    points += pts
+    breakdown.push({ label: `Resultado exacto${!isGroup ? ' + bonus eliminatoria' : ''}`, pts })
+  } else if (correctWinner) {
+    points += cfg.correct_winner_points
+    breakdown.push({ label: 'Ganador correcto', pts: cfg.correct_winner_points })
+  } else if (correctDraw) {
+    points += cfg.correct_draw_points
+    breakdown.push({ label: 'Empate correcto', pts: cfg.correct_draw_points })
+  }
+
+  if (!isGroup && (realHome === realAway)) {
+    const etExact = predEtHome === realEtHome && predEtAway === realEtAway
+    if (etExact) {
+      points += cfg.correct_et_result_points
+      breakdown.push({ label: 'Resultado exacto tiempo extra', pts: cfg.correct_et_result_points })
+    }
+    const pkCorrect = predPkWinner === realPkWinner
+    if (pkCorrect) {
+      points += cfg.correct_pk_winner_points
+      breakdown.push({ label: 'Ganador en penales correcto', pts: cfg.correct_pk_winner_points })
+    }
+  }
+
+  const isRealDraw = realHome === realAway
+  const needsEt = !isGroup && isRealDraw
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest flex items-center gap-2">
+        <span className="w-5 h-px bg-border inline-block" />
+        Calculadora de puntos
+        <span className="flex-1 h-px bg-border inline-block" />
+      </h2>
+
+      <div className="card p-4 space-y-4">
+        <p className="text-sm text-text-secondary leading-relaxed">
+          Probá diferentes resultados para entender cómo se calculan los puntos.
+          Configurá el resultado real y tu predicción, y mirá cuántos puntos ganarías.
+        </p>
+
+        {/* Toggle grupos / eliminatoria */}
+        <div className="flex items-center gap-3 bg-surface rounded-lg p-3">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isGroup}
+              onChange={() => setIsGroup(!isGroup)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-muted after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white" />
+          </label>
+          <div>
+            <p className="text-sm font-medium text-text-primary">
+              {isGroup ? 'Fase de grupos' : 'Fase eliminatoria'}
+            </p>
+            <p className="text-[11px] text-text-muted">
+              {isGroup ? 'Solo 90 minutos' : '90 min + alargue + penales (si hay empate)'}
+            </p>
+          </div>
+        </div>
+
+        {/* Equipos */}
+        <div className="flex items-center justify-between text-sm px-2">
+          <span className="font-semibold text-text-primary w-20 truncate">Uruguay</span>
+          <span className="text-xs text-text-muted">vs</span>
+          <span className="font-semibold text-text-primary w-20 truncate text-right">Argentina</span>
+        </div>
+
+        {/* Resultado real */}
+        <div className="bg-background rounded-lg p-3 space-y-2">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Resultado real</p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 space-y-1">
+              <label className="text-[11px] text-text-secondary">Goles Uruguay (90')</label>
+              <input
+                type="number"
+                min={0}
+                value={realHome}
+                onChange={e => setRealHome(Math.max(0, Number(e.target.value)))}
+                className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-primary"
+              />
+            </div>
+            <span className="text-lg font-bold text-text-muted pt-5">–</span>
+            <div className="flex-1 space-y-1">
+              <label className="text-[11px] text-text-secondary">Goles Argentina (90')</label>
+              <input
+                type="number"
+                min={0}
+                value={realAway}
+                onChange={e => setRealAway(Math.max(0, Number(e.target.value)))}
+                className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+
+          {/* Alargue real */}
+          {needsEt && (
+            <div className="flex items-center gap-3 pt-1">
+              <div className="flex-1 space-y-1">
+                <label className="text-[11px] text-text-secondary">Goles URU (alargue)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={realEtHome}
+                  onChange={e => setRealEtHome(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-primary"
+                />
+              </div>
+              <span className="text-lg font-bold text-text-muted pt-5">–</span>
+              <div className="flex-1 space-y-1">
+                <label className="text-[11px] text-text-secondary">Goles ARG (alargue)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={realEtAway}
+                  onChange={e => setRealEtAway(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Penales reales */}
+          {needsEt && (realEtHome === realEtAway) && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] text-text-secondary">Ganador penales</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setRealPkWinner('home')}
+                  className={`flex-1 py-2 rounded text-xs font-medium transition-colors ${
+                    realPkWinner === 'home'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface border border-border text-text-secondary hover:border-primary'
+                  }`}
+                >
+                  Uruguay
+                </button>
+                <button
+                  onClick={() => setRealPkWinner('away')}
+                  className={`flex-1 py-2 rounded text-xs font-medium transition-colors ${
+                    realPkWinner === 'away'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface border border-border text-text-secondary hover:border-primary'
+                  }`}
+                >
+                  Argentina
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tu predicción */}
+        <div className="bg-background rounded-lg p-3 space-y-2">
+          <p className="text-[10px] text-accent/80 uppercase tracking-wider">Tu predicción</p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 space-y-1">
+              <label className="text-[11px] text-text-secondary">Goles Uruguay (90')</label>
+              <input
+                type="number"
+                min={0}
+                value={predHome}
+                onChange={e => setPredHome(Math.max(0, Number(e.target.value)))}
+                className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-accent"
+              />
+            </div>
+            <span className="text-lg font-bold text-text-muted pt-5">–</span>
+            <div className="flex-1 space-y-1">
+              <label className="text-[11px] text-text-secondary">Goles Argentina (90')</label>
+              <input
+                type="number"
+                min={0}
+                value={predAway}
+                onChange={e => setPredAway(Math.max(0, Number(e.target.value)))}
+                className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-accent"
+              />
+            </div>
+          </div>
+
+          {/* Alargue predicho */}
+          {needsEt && (
+            <div className="flex items-center gap-3 pt-1">
+              <div className="flex-1 space-y-1">
+                <label className="text-[11px] text-text-secondary">Goles URU (alargue)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={predEtHome}
+                  onChange={e => setPredEtHome(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-accent"
+                />
+              </div>
+              <span className="text-lg font-bold text-text-muted pt-5">–</span>
+              <div className="flex-1 space-y-1">
+                <label className="text-[11px] text-text-secondary">Goles ARG (alargue)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={predEtAway}
+                  onChange={e => setPredEtAway(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-center text-sm text-text-primary focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Penales predichos */}
+          {needsEt && (realEtHome === realEtAway) && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] text-text-secondary">Ganador penales</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPredPkWinner('home')}
+                  className={`flex-1 py-2 rounded text-xs font-medium transition-colors ${
+                    predPkWinner === 'home'
+                      ? 'bg-accent text-white'
+                      : 'bg-surface border border-border text-text-secondary hover:border-accent'
+                  }`}
+                >
+                  Uruguay
+                </button>
+                <button
+                  onClick={() => setPredPkWinner('away')}
+                  className={`flex-1 py-2 rounded text-xs font-medium transition-colors ${
+                    predPkWinner === 'away'
+                      ? 'bg-accent text-white'
+                      : 'bg-surface border border-border text-text-secondary hover:border-accent'
+                  }`}
+                >
+                  Argentina
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Resultado */}
+        <div className="bg-surface rounded-lg p-4 space-y-2">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Puntos obtenidos</p>
+          {breakdown.length > 0 ? (
+            <div className="space-y-1.5">
+              {breakdown.map(b => (
+                <div key={b.label} className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">{b.label}</span>
+                  <span className="font-bold text-primary">+{b.pts} pts</span>
+                </div>
+              ))}
+              <div className="border-t border-border pt-2 mt-2 flex items-center justify-between">
+                <span className="text-sm font-semibold text-text-primary">Total</span>
+                <span className="text-xl font-bold text-primary">{points} pts</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-text-muted text-center py-2">
+              No acertaste ni el ganador ni el marcador. 0 pts.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 // ── Mini componente para mostrar un ejemplo de partido ──────────────────────
@@ -289,6 +580,19 @@ export function AyudaPage() {
           <Scenario icon={Clock} color="bg-purple-500/20 text-purple-400" title="Con tiempo extra y penales">
             <MatchExample home="Brasil" away="Holanda" homeScore={1} awayScore={1}
               predicted="1 – 1" label="90 min (empate real)" />
+            <div className="bg-background rounded-lg p-3 space-y-2">
+              <p className="text-[10px] text-text-muted uppercase tracking-wider">Resultado completo del partido</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-text-primary w-16 truncate">Brasil</span>
+                <span className="font-bold tabular-nums text-text-muted mx-2">
+                  1 – 1
+                </span>
+                <span className="font-medium text-text-primary w-16 truncate text-right">Holanda</span>
+              </div>
+              <p className="text-[11px] text-text-secondary">Tiempo extra: 0 – 0 (sin goles adicionales)</p>
+              <p className="text-[11px] text-text-secondary">Penales: Brasil 4 – 3 Holanda</p>
+              <p className="text-[11px] text-text-muted">Tu predicción: 1 – 1 · ET 0 – 0 · Ganador penales: Brasil</p>
+            </div>
             <div className="space-y-1">
               <div className="flex justify-between px-3 py-1.5 bg-primary/10 rounded text-xs">
                 <span className="text-text-secondary">Exacto 90 min (1–1)</span>
@@ -388,6 +692,9 @@ export function AyudaPage() {
           </table>
         </div>
       </section>
+
+      {/* ── CALCULADORA DE PUNTOS ── */}
+      <ScoreCalculator cfg={cfg} />
 
       {/* ── + PUNTOS (APUESTAS ESPECIALES) ── */}
       <section className="space-y-3">
