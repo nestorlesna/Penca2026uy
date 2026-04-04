@@ -68,6 +68,7 @@ Crear `.env.local` en la raíz:
 ```env
 VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
 VITE_SUPABASE_ANON_KEY=<tu-anon-key>
+VITE_TURNSTILE_SITE_KEY=<tu-site-key-de-cloudflare-turnstile>
 ```
 
 ### 3. Inicializar base de datos
@@ -225,7 +226,7 @@ supabase/
 
 ### Vercel
 1. Conectar el repositorio en [vercel.com](https://vercel.com)
-2. Agregar variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
+2. Agregar variables de entorno: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `VITE_TURNSTILE_SITE_KEY`
 3. Framework preset: **Vite**
 
 ### Supabase
