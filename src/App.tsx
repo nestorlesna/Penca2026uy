@@ -26,6 +26,8 @@ import { BracketPage } from './pages/BracketPage'
 import { MasPuntosPage } from './pages/MasPuntosPage'
 import { SubgruposPage } from './pages/SubgruposPage'
 import { SubgrupoDetailPage } from './pages/SubgrupoDetailPage'
+import { useUpdateCheck } from './hooks/useUpdateCheck'
+import { UpdateModal } from './components/ui/UpdateModal'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,9 +35,11 @@ const queryClient = new QueryClient({
   },
 })
 
-export default function App() {
+function AppContent() {
+  const { update, dismiss } = useUpdateCheck()
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -67,6 +71,24 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+
+      {update && (
+        <UpdateModal
+          versionName={update.version_name}
+          apkUrl={update.apk_url}
+          releaseNotes={update.release_notes}
+          forceUpdate={update.force_update}
+          onDismiss={dismiss}
+        />
+      )}
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
       <Toaster
         theme="dark"
         toastOptions={{
