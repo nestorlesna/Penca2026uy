@@ -236,6 +236,111 @@ supabase/
 
 ---
 
+## Aplicación Android (Capacitor)
+
+La app móvil se genera con Capacitor, que empaqueta el build web en una app nativa Android.
+
+### Requisitos
+- **Android Studio** ([descargar](https://developer.android.com/studio))
+- **JDK 17+** (viene incluido con Android Studio)
+- **Node.js 18+**
+
+### Primer setup
+
+```bash
+# 1. Instalar dependencias (si no están instaladas)
+npm install
+
+# 2. Build del proyecto web + sync con Capacitor
+npm run cap:sync
+```
+
+### Generar APK para instalar
+
+#### Opción A: Desde la terminal (rápido)
+
+```bash
+# Build + sync
+npm run cap:sync
+
+# Generar APK debug directamente
+cd android
+./gradlew assembleDebug
+# En Windows: gradlew.bat assembleDebug
+```
+
+El APK se genera en `android/app/build/outputs/apk/debug/app-debug.apk`. Se puede instalar directamente en cualquier dispositivo Android (habilitar "Orígenes desconocidos" en ajustes).
+
+#### Opción B: Desde Android Studio (recomendado)
+
+1. Abrir Android Studio → **File → Open** → seleccionar la carpeta `android/`
+2. Esperar a que Gradle sincronice el proyecto
+3. Conectar un dispositivo Android por USB (con depuración USB activada) o usar un emulador
+4. Click en **Run** (▶) o `Shift + F10`
+
+Esto instala la app directamente en el dispositivo/emulador. Para generar un APK manualmente:
+
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**
+
+El APK queda en `android/app/build/outputs/apk/debug/`.
+
+### Generar APK de producción (firmado)
+
+Para distribuir la app fuera de Play Store:
+
+1. Generar un keystore:
+```bash
+keytool -genkey -v -keystore pencales-release.keystore -alias pencales -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Crear `android/app/keystore.properties`:
+```properties
+storePassword=<tu-password>
+keyPassword=<tu-password>
+keyAlias=pencales
+storeFile=../pencales-release.keystore
+```
+
+3. En Android Studio: **Build → Generate Signed Bundle / APK** → seleccionar el keystore → elegir **APK** → **Build**
+
+El APK firmado queda en `android/app/release/`.
+
+### Sincronizar cambios del código web
+
+Cada vez que modifiques el código de la app web:
+
+```bash
+npm run cap:sync    # Build + copia los archivos a Android
+```
+
+O si ya hiciste build manualmente:
+
+```bash
+npx cap copy        # Solo copia archivos sin rebuild
+npx cap sync        # Copy + actualiza plugins nativos
+```
+
+### Actualizar el logo/icono
+
+El logo fuente está en `resources/icon.svg`. Para regenerar todos los iconos y splash screens:
+
+```bash
+npx capacitor-assets generate
+npx cap sync
+```
+
+### Scripts npm disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo web |
+| `npm run build` | Build de producción web |
+| `npm run cap:sync` | Build web + sync con Capacitor |
+| `npm run cap:android` | Build + sync + abre Android Studio |
+| `npm run cap:ios` | Build + sync + abre Xcode (solo macOS) |
+
+---
+
 ## Licencia
 
 Proyecto privado · Todos los derechos reservados · 2025-2026
