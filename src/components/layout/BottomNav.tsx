@@ -1,6 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Calendar, LayoutGrid, Trophy, Star, User, Users } from 'lucide-react'
+import { Calendar, HelpCircle, LayoutGrid, Trophy, Star, User, Users } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { useAuth } from '../../hooks/useAuth'
+
+const isNative = Capacitor.isNativePlatform()
 
 const navItems = [
   { to: '/fixture', icon: Calendar, label: 'Fixture' },
@@ -8,7 +11,10 @@ const navItems = [
   { to: '/ranking', icon: Trophy, label: 'Ranking' },
   { to: '/subgrupos', icon: Users, label: 'Subgrupos', authRequired: true },
   { to: '/mis-predicciones', icon: Star, label: 'Apuestas', authRequired: true },
-  { to: '/perfil', icon: User, label: 'Perfil', authRequired: true },
+  ...(isNative
+    ? [{ to: '/ayuda', icon: HelpCircle, label: 'Ayuda' }]
+    : [{ to: '/perfil', icon: User, label: 'Perfil', authRequired: true }]
+  ),
 ]
 
 export function BottomNav() {

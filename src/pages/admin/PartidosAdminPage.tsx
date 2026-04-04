@@ -307,38 +307,39 @@ export function PartidosAdminPage() {
             <button
               key={match.id}
               onClick={() => setSelected(match)}
-              className="card w-full p-3 flex items-center gap-3 hover:border-primary/40 transition-colors text-left"
+              className="card w-full p-3 hover:border-primary/40 transition-colors text-left"
             >
-              {/* Número + fase */}
-              <div className="flex-shrink-0 w-10 text-center">
-                <p className="text-[11px] text-text-muted">#{match.match_number}</p>
+              {/* Línea superior: fase/grupo + número + fecha + hora + estadio */}
+              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
                 {match.group
-                  ? <span className="badge-primary text-[9px]">G{match.group.name}</span>
-                  : <span className="badge bg-accent/20 text-accent text-[9px]">{match.phase.name.substring(0, 3)}</span>
+                  ? <span className="badge-primary text-[10px] font-semibold uppercase tracking-wide">Grupo {match.group.name}</span>
+                  : <span className="badge bg-accent/20 text-accent text-[10px] font-semibold uppercase tracking-wide">{match.phase.name}</span>
                 }
+                <span className="text-text-muted text-[11px]">#{match.match_number}</span>
+                <span className="text-text-muted text-[11px]">·</span>
+                <span className="text-text-secondary text-[11px]">{formatMatchDay(match.match_datetime)}</span>
+                <span className="text-text-muted text-[11px]">·</span>
+                <span className="text-text-secondary text-[11px] font-medium">{formatMatchTime(match.match_datetime)}</span>
+                {match.stadium && (
+                  <>
+                    <span className="text-text-muted text-[11px]">·</span>
+                    <span className="text-text-muted text-[11px] truncate">{match.stadium.city}</span>
+                  </>
+                )}
+                {match.status === 'finished' && (
+                  <span className="ml-auto badge bg-success/20 text-success text-[10px]">Final</span>
+                )}
               </div>
 
               {/* Equipos */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
-                  </div>
-                  <span className="text-text-muted text-xs font-bold">vs</span>
-                  <div className="flex-1 min-w-0 flex justify-end">
-                    <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">
-                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
-                  {match.stadium && ` · ${match.stadium.city}`}
-                </p>
-              </div>
-
-              {/* Estado */}
-              <div className="flex-shrink-0">
-                {match.status === 'finished' && <span className="badge bg-success/20 text-success text-[10px]">Final</span>}
-                {match.status === 'scheduled' && <span className="badge bg-border text-text-muted text-[10px]">Prog.</span>}
+                <span className="text-text-muted text-base font-light flex-shrink-0">vs</span>
+                <div className="flex-1 min-w-0 flex justify-end">
+                  <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
+                </div>
               </div>
             </button>
           ))}

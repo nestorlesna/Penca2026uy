@@ -81,13 +81,17 @@ export function PredictionModal({ match, existing, onClose }: Props) {
       const showEt = isKnockout && draw90
       const drawEt = showEt && form.homeScoreEt === form.awayScoreEt
       const showPk = showEt && drawEt
+      const teamsConfirmed = !!(match.home_team && match.away_team)
 
       if (isKnockout && draw90 && (form.homeScoreEt === undefined)) {
         throw new Error('Ingresá el resultado en tiempo extra')
       }
-      if (showPk && !form.pkWinnerId) {
+      if (showPk && teamsConfirmed && !form.pkWinnerId) {
         throw new Error('Seleccioná el ganador en penales')
       }
+
+      // Solo guardar pk winner si es un ID real de equipo (equipos confirmados)
+      const pkWinnerId = showPk && teamsConfirmed && form.pkWinnerId ? form.pkWinnerId : null
 
       await upsertPrediction(user.id, {
         matchId: match.id,
@@ -95,7 +99,7 @@ export function PredictionModal({ match, existing, onClose }: Props) {
         awayScore: form.awayScore,
         homeScoreEt: showEt ? form.homeScoreEt : null,
         awayScoreEt: showEt ? form.awayScoreEt : null,
-        predictedPkWinnerId: showPk ? form.pkWinnerId : null,
+        predictedPkWinnerId: pkWinnerId,
       })
     },
     onSuccess: () => {
@@ -170,34 +174,45 @@ export function PredictionModal({ match, existing, onClose }: Props) {
         )}
 
         {/* Penales */}
-        {isKnockout && (
-          <div className={`transition-opacity ${showPk ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-            <p className="text-[11px] text-text-muted uppercase tracking-wide mb-3 text-center">
-              Ganador en penales {!showPk && '(solo si hay empate en ET)'}
-            </p>
-            <div className="flex gap-2">
-              {[match.home_team, match.away_team].map(team => {
-                if (!team) return null
-                const isSelected = form.pkWinnerId === team.id
-                return (
-                  <button
-                    key={team.id}
-                    type="button"
-                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                      isSelected
-                        ? 'border-primary bg-primary/20 text-primary'
-                        : 'border-border bg-surface-2 text-text-secondary hover:border-primary/40'
-                    }`}
-                    onClick={() => setForm(f => ({ ...f, pkWinnerId: team.id }))}
-                    disabled={!showPk}
-                  >
-                    {team.abbreviation}
-                  </button>
-                )
-              })}
+        {isKnockout && (() => {
+          const teamsConfirmed = !!(match.home_team && match.away_team)
+          const pkCandidates = [
+            { id: match.home_team?.id ?? 'home', label: match.home_team?.abbreviation ?? match.home_slot_label ?? 'Local' },
+            { id: match.away_team?.id ?? 'away', label: match.away_team?.abbreviation ?? match.away_slot_label ?? 'Visit.' },
+          ]
+          return (
+            <div className={`transition-opacity ${showPk ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+              <p className="text-[11px] text-text-muted uppercase tracking-wide mb-3 text-center">
+                Ganador en penales {!showPk && '(solo si hay empate en ET)'}
+              </p>
+              {!teamsConfirmed && showPk && (
+                <p className="text-[11px] text-text-muted text-center mb-2">
+                  Se podrá guardar cuando los equipos sean confirmados
+                </p>
+              )}
+              <div className="flex gap-2">
+                {pkCandidates.map(candidate => {
+                  const isSelected = form.pkWinnerId === candidate.id
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary/20 text-primary'
+                          : 'border-border bg-surface-2 text-text-secondary hover:border-primary/40'
+                      }`}
+                      onClick={() => setForm(f => ({ ...f, pkWinnerId: candidate.id }))}
+                      disabled={!showPk}
+                    >
+                      {candidate.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Actions */}
         <div className="flex gap-2 pt-1">

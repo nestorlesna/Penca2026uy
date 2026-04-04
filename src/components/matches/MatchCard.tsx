@@ -1,6 +1,6 @@
 import { MapPin, Users } from 'lucide-react'
 import { TeamFlag } from '../ui/TeamFlag'
-import { formatMatchTime, formatMatchDay } from '../../utils/datetime'
+import { formatMatchTime } from '../../utils/datetime'
 import type { MatchWithRelations } from '../../types/match'
 
 interface Props {
@@ -8,9 +8,10 @@ interface Props {
   onClick?: () => void
   onStadiumClick?: (stadiumId: string) => void
   onPredictionsClick?: (matchId: string) => void
+  footerContent?: React.ReactNode
 }
 
-export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick }: Props) {
+export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick, footerContent }: Props) {
   const hasScore = match.home_score_90 !== null && match.away_score_90 !== null
 
   const homeWon = hasScore && match.winner_team_id === match.home_team?.id
@@ -50,7 +51,7 @@ export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick }
           </button>
         ) : (
           <span className="text-text-secondary text-xs">
-            {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
+            {formatMatchTime(match.match_datetime)}
           </span>
         )}
       </div>
@@ -107,18 +108,22 @@ export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick }
         </div>
       </div>
 
-      {/* Estadio */}
-      <div
-        className="flex items-center gap-1 mt-3 pt-3 border-t border-border cursor-pointer hover:text-text-secondary transition-colors"
-        onClick={(e) => {
-          e.stopPropagation()
-          onStadiumClick?.(match.stadium.id)
-        }}
-      >
-        <MapPin size={11} className="text-text-muted flex-shrink-0" />
-        <span className="text-[11px] text-text-muted truncate">
-          {match.stadium.name} · {match.stadium.city}
-        </span>
+      {/* Footer: estadio (default) o contenido custom */}
+      <div className="mt-3 pt-3 border-t border-border">
+        {footerContent ?? (
+          <div
+            className="flex items-center gap-1 cursor-pointer hover:text-text-secondary transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              onStadiumClick?.(match.stadium.id)
+            }}
+          >
+            <MapPin size={11} className="text-text-muted flex-shrink-0" />
+            <span className="text-[11px] text-text-muted truncate">
+              {match.stadium.name} · {match.stadium.city}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
