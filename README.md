@@ -232,7 +232,7 @@ supabase/
 ### Supabase
 - Ejecutar los scripts SQL en orden (ver sección Setup)
 - Configurar buckets de Storage: `avatars` y `flags` (públicos)
-- Activar Auth providers: Email/Password + Google OAuth
+- Activar Auth provider: Email/Password
 
 ---
 
