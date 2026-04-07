@@ -118,7 +118,7 @@ function BonusSection({
   const won = calculated && earnedPts.points_earned > 0
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-visible">
       <button
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-2/50 transition-colors"
         onClick={() => setOpen(o => !o)}
@@ -562,7 +562,7 @@ function TopScorerTeamSection({
       earnedPts={earned}
       locked={locked}
     >
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-visible">
         <label className="block text-xs text-text-muted">Selecciona el equipo más goleador del torneo</label>
         <TeamSelect value={val} onChange={setVal} teams={teams} placeholder="Elegir equipo…" disabled={locked} />
       </div>
@@ -629,7 +629,7 @@ function TopGroupSection({
           disabled={locked}
           value={val ?? ''}
           onChange={e => setVal(e.target.value || null)}
-          className="input text-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          className="input text-sm w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="">— sin respuesta —</option>
           {groups.map(g => (
@@ -731,7 +731,7 @@ export function MasPuntosPage() {
   const commonProps = { pred: pred ?? null, config, locked, onSave }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 overflow-visible">
 
       {/* Header */}
       <div>

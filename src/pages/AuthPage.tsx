@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { Trophy, Loader2, Eye, EyeOff, Clock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -56,11 +56,16 @@ function CountdownTimer() {
   )
 }
 
-type Tab = 'login' | 'register'
+type Tab = 'login' | 'register' | 'forgot' | 'reset'
 
 export function AuthPage() {
   const { user, isActive } = useAuth()
-  const [tab, setTab] = useState<Tab>('login')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab')
+    if (t === 'reset') return 'reset'
+    return 'login'
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -115,6 +120,7 @@ export function AuthPage() {
       options: {
         data: { username, full_name: displayName },
         captchaToken,
+        emailRedirectTo: window.location.origin,
       },
     })
 
@@ -124,6 +130,38 @@ export function AuthPage() {
       setSuccess('¡Registro exitoso! Tu cuenta está pendiente de aprobación por el administrador.')
       setEmail(''); setPassword(''); setDisplayName(''); setUsername('')
       setCaptchaToken(null)
+    }
+    setLoading(false)
+  }
+
+  async function handleRecover(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?tab=reset`
+    })
+    if (error) {
+      setError(traducirError(error.message))
+    } else {
+      setSuccess('Se ha enviado un correo con instrucciones para restablecer tu contraseña.')
+      setEmail('')
+    }
+    setLoading(false)
+  }
+
+  async function handleResetPassword(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) {
+      setError(traducirError(error.message))
+    } else {
+      setSuccess('Tu contraseña ha sido actualizada correctamente. Ya podés ingresar.')
+      setTab('login')
+      setPassword('')
+      setSearchParams({})
     }
     setLoading(false)
   }
@@ -143,21 +181,49 @@ export function AuthPage() {
         {/* Card */}
         <div className="card p-6">
           {/* Tabs */}
-          <div className="flex rounded-lg bg-surface-2 p-1 mb-5">
-            {(['login', 'register'] as Tab[]).map(t => (
+          {tab !== 'forgot' && tab !== 'reset' && (
+            <div className="flex rounded-lg bg-surface-2 p-1 mb-5">
+              {(['login', 'register'] as Tab[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    setTab(t);
+                    setError(null);
+                    setSuccess(null);
+                    setCaptchaToken(null);
+                    setSearchParams({});
+                  }}
+                  className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    tab === t
+                      ? 'bg-surface text-text-primary shadow-sm'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {t === 'login' ? 'Ingresar' : 'Registrarse'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {tab === 'forgot' && (
+            <div className="mb-5">
               <button
-                key={t}
-                onClick={() => { setTab(t); setError(null); setSuccess(null); setCaptchaToken(null) }}
-                className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  tab === t
-                    ? 'bg-surface text-text-primary shadow-sm'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
+                onClick={() => { setTab('login'); setError(null); setSuccess(null) }}
+                className="text-xs text-primary hover:underline flex items-center gap-1"
               >
-                {t === 'login' ? 'Ingresar' : 'Registrarse'}
+                ← Volver al ingreso
               </button>
-            ))}
-          </div>
+              <h2 className="text-lg font-bold text-text-primary mt-2">Recuperar contraseña</h2>
+              <p className="text-xs text-text-muted mt-1">Ingresá tu email y te enviaremos un link para crear una nueva.</p>
+            </div>
+          )}
+
+          {tab === 'reset' && (
+            <div className="mb-5">
+              <h2 className="text-lg font-bold text-text-primary">Nueva contraseña</h2>
+              <p className="text-xs text-text-muted mt-1">Elegí una contraseña segura para tu cuenta.</p>
+            </div>
+          )}
 
           {/* Mensaje de éxito */}
           {success && (
@@ -174,75 +240,116 @@ export function AuthPage() {
           )}
 
           {/* Formulario */}
-          <form onSubmit={tab === 'login' ? handleLogin : handleRegister} className="space-y-4">
-            {tab === 'register' && (
+          <form
+            onSubmit={
+              tab === 'login' ? handleLogin :
+              tab === 'register' ? handleRegister :
+              tab === 'reset' ? handleResetPassword :
+              handleRecover
+            }
+            className="space-y-4"
+          >
+            {tab !== 'forgot' && tab !== 'reset' && (
               <>
+                {tab === 'register' && (
+                  <>
+                    <div>
+                      <label className="block text-xs text-text-secondary mb-1.5">Nombre para mostrar</label>
+                      <input
+                        type="text"
+                        value={displayName}
+                        onChange={e => setDisplayName(e.target.value)}
+                        className="input"
+                        placeholder="Ej: Juan García"
+                        required
+                        maxLength={60}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-secondary mb-1.5">
+                        Nombre de usuario <span className="text-text-muted">(solo letras, números, _)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={e => setUsername(e.target.value.toLowerCase())}
+                        className="input"
+                        placeholder="Ej: juangarcia"
+                        required
+                        minLength={3}
+                        maxLength={30}
+                        pattern="[a-zA-Z0-9_]+"
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1.5">Nombre para mostrar</label>
+                  <label className="block text-xs text-text-secondary mb-1.5">Email</label>
                   <input
-                    type="text"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     className="input"
-                    placeholder="Ej: Juan García"
+                    placeholder="tu@email.com"
                     required
-                    maxLength={60}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-text-secondary mb-1.5">
-                    Nombre de usuario <span className="text-text-muted">(solo letras, números, _)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={e => setUsername(e.target.value.toLowerCase())}
-                    className="input"
-                    placeholder="Ej: juangarcia"
-                    required
-                    minLength={3}
-                    maxLength={30}
-                    pattern="[a-zA-Z0-9_]+"
+                    autoComplete={tab === 'login' ? 'email' : 'new-email'}
                   />
                 </div>
               </>
             )}
 
-            <div>
-              <label className="block text-xs text-text-secondary mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="input"
-                placeholder="tu@email.com"
-                required
-                autoComplete={tab === 'login' ? 'email' : 'new-email'}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs text-text-secondary mb-1.5">Contraseña</label>
-              <div className="relative">
+            {tab === 'forgot' && (
+              <div>
+                <label className="block text-xs text-text-secondary mb-1.5">Email</label>
                 <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="input pr-10"
-                  placeholder={tab === 'register' ? 'Mínimo 6 caracteres' : '••••••••'}
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="input"
+                  placeholder="tu@email.com"
                   required
-                  minLength={6}
-                  autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                  autoComplete="email"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
               </div>
-            </div>
+            )}
+
+            {(tab !== 'forgot') && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs text-text-secondary">
+                    {tab === 'reset' ? 'Nueva contraseña' : 'Contraseña'}
+                  </label>
+                  {tab === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => { setTab('forgot'); setError(null); setSuccess(null) }}
+                      className="text-[11px] text-primary hover:underline focus:outline-none"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="input pr-10"
+                    placeholder={tab === 'register' ? 'Mínimo 6 caracteres' : tab === 'reset' ? 'Ingresá tu nueva contraseña' : '••••••••'}
+                    required
+                    minLength={6}
+                    autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                  >
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -250,7 +357,7 @@ export function AuthPage() {
               className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
-              {tab === 'login' ? 'Ingresar' : 'Crear cuenta'}
+              {tab === 'login' ? 'Ingresar' : tab === 'register' ? 'Crear cuenta' : tab === 'reset' ? 'Guardar nueva contraseña' : 'Enviar instrucciones'}
             </button>
           </form>
 

@@ -144,7 +144,7 @@ export const supabase = createClient(
 
 ### Auth & Authorization
 
-- Supabase Auth (email/password + Google OAuth)
+- Supabase Auth (email/password)
 - `profiles` table mirrors `auth.users` — created via trigger on signup
 - `profiles.is_active` = false by default; admin must activate user before they can predict
 - `profiles.is_admin` = false by default

@@ -232,9 +232,207 @@ supabase/
 ### Supabase
 - Ejecutar los scripts SQL en orden (ver sección Setup)
 - Configurar buckets de Storage: `avatars` y `flags` (públicos)
-- Activar Auth providers: Email/Password + Google OAuth
+- Activar Auth provider: Email/Password
 
 ---
+
+## Aplicación Android (Capacitor)
+
+La app móvil se genera con Capacitor, que empaqueta el build web en una app nativa Android.
+
+### Requisitos
+- **Android Studio** ([descargar](https://developer.android.com/studio))
+- **JDK 17+** (viene incluido con Android Studio)
+- **Node.js 18+**
+
+### Primer setup
+
+```bash
+# 1. Instalar dependencias (si no están instaladas)
+npm install
+
+# 2. Build del proyecto web + sync con Capacitor
+npm run cap:sync
+```
+
+### Generar APK para instalar
+
+#### Opción A: Desde la terminal (rápido)
+
+```bash
+# Build + sync
+npm run cap:sync
+
+# Generar APK debug directamente
+cd android
+./gradlew assembleDebug
+# En Windows: gradlew.bat assembleDebug
+```
+
+El APK se genera en `android/app/build/outputs/apk/debug/app-debug.apk`. Se puede instalar directamente en cualquier dispositivo Android (habilitar "Orígenes desconocidos" en ajustes).
+
+#### Opción B: Desde Android Studio (recomendado)
+
+1. Abrir Android Studio → **File → Open** → seleccionar la carpeta `android/`
+2. Esperar a que Gradle sincronice el proyecto
+3. Conectar un dispositivo Android por USB (con depuración USB activada) o usar un emulador
+4. Click en **Run** (▶) o `Shift + F10`
+
+Esto instala la app directamente en el dispositivo/emulador. Para generar un APK manualmente:
+
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**
+
+El APK queda en `android/app/build/outputs/apk/debug/`.
+
+### Generar APK de producción (firmado)
+
+Para distribuir la app fuera de Play Store:
+
+1. Generar un keystore:
+```bash
+keytool -genkey -v -keystore pencales-release.keystore -alias pencales -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Crear `android/app/keystore.properties`:
+```properties
+storePassword=<tu-password>
+keyPassword=<tu-password>
+keyAlias=pencales
+storeFile=../pencales-release.keystore
+```
+
+3. En Android Studio: **Build → Generate Signed Bundle / APK** → seleccionar el keystore → elegir **APK** → **Build**
+
+El APK firmado queda en `android/app/release/`.
+
+### Sincronizar cambios del código web
+
+Cada vez que modifiques el código de la app web:
+
+```bash
+npm run cap:sync    # Build + copia los archivos a Android
+```
+
+O si ya hiciste build manualmente:
+
+```bash
+npx cap copy        # Solo copia archivos sin rebuild
+npx cap sync        # Copy + actualiza plugins nativos
+```
+
+### Actualizar el logo/icono
+
+El logo fuente está en `resources/icon.svg`. Para regenerar todos los iconos y splash screens:
+
+```bash
+npx capacitor-assets generate
+npx cap sync
+```
+
+### Scripts npm disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo web |
+| `npm run build` | Build de producción web |
+| `npm run cap:sync` | Build web + sync con Capacitor |
+| `npm run cap:android` | Build + sync + abre Android Studio |
+| `npm run cap:ios` | Build + sync + abre Xcode (solo macOS) |
+
+---
+
+## Distribución de actualizaciones (sin Play Store)
+
+La app verifica automáticamente si hay una versión nueva al iniciar. Si la hay, muestra un modal con un botón para descargar el APK directamente desde GitHub Releases.
+
+El chequeo compara el `versionCode` del APK instalado con el valor en [`version.json`](./version.json) (en la raíz del repo, servido vía `raw.githubusercontent.com`).
+
+### Pasos para publicar una nueva versión
+
+**1. Actualizar el número de versión en el código**
+
+Editar `android/app/build.gradle`:
+
+```groovy
+versionCode 2          // ← incrementar siempre (entero)
+versionName "1.1.0"    // ← string visible para el usuario
+```
+
+**2. Actualizar `version.json`**
+
+Editar la raíz del repo con los nuevos datos:
+
+```json
+{
+  "version_code": 2,
+  "version_name": "1.1.0",
+  "apk_url": "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.1.0/Penca2026uy.apk",
+  "release_notes": "Descripción de los cambios de esta versión.",
+  "force_update": false
+}
+```
+
+> Cambiar `force_update` a `true` si la versión es obligatoria (el modal no tendrá botón de cerrar).
+
+**3. Generar el APK firmado**
+
+```bash
+npm run cap:sync
+cd android
+./gradlew assembleRelease
+# En Windows: gradlew.bat assembleRelease
+```
+
+O desde Android Studio: **Build → Generate Signed Bundle / APK → APK → Release**
+
+El APK queda en `android/app/build/outputs/apk/release/`.
+
+**4. Hacer commit y push**
+
+```bash
+git add android/app/build.gradle version.json
+git commit -m "chore: bump version to v1.1.0"
+git push
+```
+
+**5. Crear el Release en GitHub**
+
+1. Ir a [github.com/nestorlesna/Penca2026uy/releases/new](https://github.com/nestorlesna/Penca2026uy/releases/new)
+2. Tag: `v1.1.0`
+3. Título: `PencaLes 2026 v1.1.0`
+4. Subir el APK como asset (arrastrar el archivo con nombre Penca2026uy.apk)
+5. Descripcion (ver mas abajo)
+6. Click en **Publish release**
+
+A partir de ese momento, los usuarios con la versión anterior verán el modal de actualización al abrir la app.
+
+---
+
+
+----- Descripcion para Release en GitHub -------
+## 🚀 PencaLes 2026 - ¡Lanzamiento Oficial!
+Esta versión marca la primera entrega estable de la aplicación diseñada para vivir la emoción del Mundial 2026. 
+### ✨ Funcionalidades Destacadas:
+- 📅 **Fixture Completo:** Los 104 partidos cargados y listos para predecir.
+- 📊 **Tablas en Tiempo Real:** Seguimiento de grupos con criterios oficiales de desempate FIFA.
+- 🏆 **Cuadro Eliminatorio:** Visualización dinámica del bracket desde dieciseisavos hasta la Final.
+- 🥇 **Ranking Global:** Compite con todos los usuarios por el primer puesto.
+- 👥 **Subgrupos:** Crea tus propias ligas privadas con amigos o compañeros de trabajo.
+- 💎 **+ Puntos:** Apuestas especiales (Podio, Goleador, Rango de goles, etc.) para sumar puntos extra.
+- 🔄 **Actualización Automática:** La app Android verificará nuevas versiones al iniciar y permitirá instalarlas directamente.
+### 🛠️ Mejoras Técnicas:
+- Integración completa con **Supabase** para datos en tiempo real.
+- UX optimizada para dispositivos móviles mediante **Capacitor**.
+- Panel de administración avanzado para gestión de resultados y auditoría de apuestas.
+---
+**Nota para la instalación en Android:**
+Descarga el archivo `Penca2026uy.apk` adjunto aquí abajo. Si es la primera vez que instalas una app fuera de la Store, recuerda habilitar el permiso de *Instalar aplicaciones de fuentes desconocidas* en los ajustes de tu teléfono.
+
+
+
+
+
+
 
 ## Licencia
 

@@ -1,6 +1,7 @@
 import { useState, useRef, type ChangeEvent } from 'react'
-import { Camera, Loader2, Check } from 'lucide-react'
+import { Camera, Loader2, Check, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { updateProfile, uploadAvatar } from '../services/profileService'
 import { RequireAuth } from '../components/auth/AuthGuard'
@@ -17,6 +18,9 @@ function PerfilContent() {
   const { user, profile, loading: authLoading } = useAuth()
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '')
   const [saving, setSaving] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [updatingPass, setUpdatingPass] = useState(false)
+  const [showPass, setShowPass] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -56,6 +60,23 @@ function PerfilContent() {
       toast.error('Error al subir la imagen. Máximo 2 MB.')
     }
     setUploadingAvatar(false)
+  }
+
+  async function handleUpdatePassword() {
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+    setUpdatingPass(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      toast.error('Error al actualizar la contraseña')
+    } else {
+      toast.success('Contraseña actualizada correctamente')
+      setNewPassword('')
+      setShowPass(false)
+    }
+    setUpdatingPass(false)
   }
 
   const avatarSrc = avatarPreview ?? profile.avatar_url
@@ -158,6 +179,46 @@ function PerfilContent() {
           {saving
             ? <><Loader2 size={15} className="animate-spin" /> Guardando...</>
             : <><Check size={15} /> Guardar cambios</>
+          }
+        </button>
+      </div>
+
+      {/* Seguridad */}
+      <div className="card p-6 mb-4">
+        <h2 className="text-sm font-semibold text-text-secondary mb-4 flex items-center gap-2">
+          <Lock size={14} /> Seguridad
+        </h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-text-secondary mb-1.5">Nueva contraseña</label>
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="input pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleUpdatePassword}
+          disabled={updatingPass || newPassword.length < 6}
+          className="btn-primary w-full mt-5 flex items-center justify-center gap-2 bg-surface text-text-primary hover:bg-surface-2 border-border"
+        >
+          {updatingPass
+            ? <><Loader2 size={15} className="animate-spin" /> Actualizando...</>
+            : <><Check size={15} /> Actualizar contraseña</>
           }
         </button>
       </div>

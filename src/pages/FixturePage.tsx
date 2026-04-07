@@ -25,14 +25,14 @@ interface StadiumModalData {
 
 // Fases disponibles en el selector
 const PHASE_TABS = [
-  { label: 'Todos',        phaseOrder: undefined },
-  { label: 'Grupos',       phaseOrder: 1 },
-  { label: 'Dieciseisavos',phaseOrder: 2 },
-  { label: 'Octavos',      phaseOrder: 3 },
-  { label: 'Cuartos',      phaseOrder: 4 },
-  { label: 'Semifinales',  phaseOrder: 5 },
-  { label: '3er Puesto',   phaseOrder: 6 },
-  { label: 'Final',        phaseOrder: 7 },
+  { label: 'Todos',   phaseOrder: undefined },
+  { label: 'Grupos',  phaseOrder: 1 },
+  { label: '16avos',  phaseOrder: 2 },
+  { label: '8vos',    phaseOrder: 3 },
+  { label: 'Cuartos', phaseOrder: 4 },
+  { label: 'Semi',    phaseOrder: 5 },
+  { label: '3er',     phaseOrder: 6 },
+  { label: 'Final',   phaseOrder: 7 },
 ]
 
 export function FixturePage() {
@@ -144,13 +144,13 @@ export function FixturePage() {
                 setGroupName(g)
                 setPhaseOrder(1)
               }}
-              className={`flex-shrink-0 w-8 h-7 rounded text-xs font-bold transition-colors ${
+              className={`flex-shrink-0 px-2 h-7 rounded text-xs font-bold transition-colors ${
                 groupName === g
                   ? 'bg-accent/20 text-accent'
                   : 'text-text-muted hover:text-text-secondary'
               }`}
             >
-              {g}
+              G. {g}
             </button>
           ))}
         </div>

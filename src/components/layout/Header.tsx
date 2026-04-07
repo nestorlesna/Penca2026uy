@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trophy, Menu, X, ShieldCheck, HelpCircle } from 'lucide-react'
+import { Trophy, Menu, X, ShieldCheck, HelpCircle, QrCode } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -83,6 +83,9 @@ export function Header() {
                     <Link to="/perfil" className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors">
                       Mi perfil
                     </Link>
+                    <Link to="/descargar" className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors flex items-center gap-2">
+                      <QrCode size={14} /> Descargar app
+                    </Link>
                     {isAdmin && (
                       <>
                         <div className="px-4 pt-2 pb-1">
@@ -149,6 +152,7 @@ export function Header() {
             {user && <MobileNavLink to="/mis-predicciones">Apuestas</MobileNavLink>}
             {user && <MobileNavLink to="/mas-puntos">+ Puntos</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
+{user && <MobileNavLink to="/descargar">Descargar app</MobileNavLink>}
             <MobileNavLink to="/ayuda">Ayuda · Puntaje</MobileNavLink>
             {!user && <MobileNavLink to="/auth">Ingresar</MobileNavLink>}
           </nav>

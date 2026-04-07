@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirma tu correo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0B0F1A;
+    }
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .card {
+      background-color: #141925;
+      border: 1px solid #1E2535;
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .title {
+      color: #F8FAFC;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 16px 0 8px;
+    }
+    .subtitle {
+      color: #94A3B8;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #10B981;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 10px;
+      margin: 16px 0;
+    }
+    .button:hover {
+      background-color: #059669;
+    }
+    .link {
+      color: #10B981;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .footer {
+      color: #475569;
+      font-size: 12px;
+      margin-top: 24px;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-block;
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #F59E0B;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">🏆</div>
+      <div class="badge">PencaLes 2026</div>
+      <h1 class="title">¡Bienvenido a la Penca!</h1>
+      <p class="subtitle">
+        Confirma tu correo electrónico para comenzar a realizar tus predicciones del Mundial 2026.
+      </p>
+      <a href="{{ .ConfirmationURL }}" class="button">Confirmar correo</a>
+      <p style="color: #94A3B8; font-size: 14px; margin-top: 16px;">
+        O copia este enlace en tu navegador:<br>
+        <a href="{{ .ConfirmationURL }}" class="link">{{ .ConfirmationURL }}</a>
+      </p>
+    </div>
+    <p class="footer">
+      Si no creaste una cuenta en PencaLes 2026, puedes ignorar este correo.<br>
+      © 2026 PencaLes - La mejor预测 del mundial
+    </p>
+  </div>
+</body>
+</html>

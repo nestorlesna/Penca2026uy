@@ -3,27 +3,38 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { RequireLoader } from '../../components/auth/AuthGuard'
 import { ResultForm } from '../../components/admin/ResultForm'
-import { TeamFlag } from '../../components/ui/TeamFlag'
+import { MatchCard } from '../../components/matches/MatchCard'
 import { useMatches } from '../../hooks/useMatches'
 import { recalculateAll } from '../../services/adminService'
-import { formatMatchDay, formatMatchTime } from '../../utils/datetime'
 import type { MatchWithRelations } from '../../types/match'
 
 const PHASES = [
-  { label: 'Grupos', order: 1 },
-  { label: 'Dieciseisavos', order: 2 },
-  { label: 'Octavos', order: 3 },
+  { label: 'Grupos',  order: 1 },
+  { label: '16avos',  order: 2 },
+  { label: '8vos',    order: 3 },
   { label: 'Cuartos', order: 4 },
-  { label: 'Semifinales', order: 5 },
-  { label: '3er Puesto', order: 6 },
-  { label: 'Final', order: 7 },
+  { label: 'Semi',    order: 5 },
+  { label: '3er',     order: 6 },
+  { label: 'Final',   order: 7 },
 ]
 
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 
-function StatusBadge({ status }: { status: MatchWithRelations['status'] }) {
-  if (status === 'finished') return <span className="badge bg-success/20 text-success text-[10px]">Finalizado</span>
-  return <span className="badge bg-border text-text-muted text-[10px]">Pendiente</span>
+function MatchFooter({ match, onSelect }: { match: MatchWithRelations; onSelect: (m: MatchWithRelations) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      {match.status === 'finished'
+        ? <span className="badge bg-success/20 text-success text-[10px]">Finalizado</span>
+        : <span className="badge bg-border text-text-muted text-[10px]">Pendiente</span>
+      }
+      <button
+        className="btn-primary text-[11px] px-3 py-1"
+        onClick={(e) => { e.stopPropagation(); onSelect(match) }}
+      >
+        Resultado
+      </button>
+    </div>
+  )
 }
 
 export function ResultadosPage() {
@@ -123,63 +134,13 @@ export function ResultadosPage() {
 
         {isLoading && <p className="text-text-muted text-sm">Cargando...</p>}
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {matches.map(match => (
-            <div key={match.id} className="card p-3 flex items-center gap-3">
-              {/* Match number */}
-              <div className="flex-shrink-0 w-8 text-center">
-                <p className="text-[11px] text-text-muted">#{match.match_number}</p>
-              </div>
-
-              {/* Teams + score */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
-                  </div>
-                  <div className="flex-shrink-0 text-center">
-                    {match.home_score_90 !== null ? (
-                      <>
-                        <div className="text-sm font-bold tabular-nums text-text-primary">
-                          {match.home_score_90} - {match.away_score_90}
-                        </div>
-                        {match.home_score_et !== null && (
-                          <div className="text-[10px] tabular-nums text-text-muted">
-                            ET {match.home_score_et} - {match.away_score_et}
-                          </div>
-                        )}
-                        {match.home_score_pk !== null && (
-                          <div className="text-[10px] tabular-nums text-accent font-semibold">
-                            P {match.home_score_pk} - {match.away_score_pk}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-sm font-bold text-text-primary">vs</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex justify-end">
-                    <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge status={match.status} />
-                  <p className="text-[11px] text-text-muted">
-                    {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex-shrink-0">
-                <button
-                  className="btn-primary text-[11px] px-2 py-1"
-                  onClick={() => setSelected(match)}
-                >
-                  Resultado
-                </button>
-              </div>
-            </div>
+            <MatchCard
+              key={match.id}
+              match={match}
+              footerContent={<MatchFooter match={match} onSelect={setSelected} />}
+            />
           ))}
         </div>
       </div>
