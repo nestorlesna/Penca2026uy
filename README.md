@@ -400,12 +400,39 @@ git push
 1. Ir a [github.com/nestorlesna/Penca2026uy/releases/new](https://github.com/nestorlesna/Penca2026uy/releases/new)
 2. Tag: `v1.1.0`
 3. Título: `PencaLes 2026 v1.1.0`
-4. Subir el APK como asset (arrastrar el archivo)
-5. Click en **Publish release**
+4. Subir el APK como asset (arrastrar el archivo con nombre Penca2026uy.apk)
+5. Descripcion (ver mas abajo)
+6. Click en **Publish release**
 
 A partir de ese momento, los usuarios con la versión anterior verán el modal de actualización al abrir la app.
 
 ---
+
+
+----- Descripcion para Release en GitHub -------
+## 🚀 PencaLes 2026 - ¡Lanzamiento Oficial!
+Esta versión marca la primera entrega estable de la aplicación diseñada para vivir la emoción del Mundial 2026. 
+### ✨ Funcionalidades Destacadas:
+- 📅 **Fixture Completo:** Los 104 partidos cargados y listos para predecir.
+- 📊 **Tablas en Tiempo Real:** Seguimiento de grupos con criterios oficiales de desempate FIFA.
+- 🏆 **Cuadro Eliminatorio:** Visualización dinámica del bracket desde dieciseisavos hasta la Final.
+- 🥇 **Ranking Global:** Compite con todos los usuarios por el primer puesto.
+- 👥 **Subgrupos:** Crea tus propias ligas privadas con amigos o compañeros de trabajo.
+- 💎 **+ Puntos:** Apuestas especiales (Podio, Goleador, Rango de goles, etc.) para sumar puntos extra.
+- 🔄 **Actualización Automática:** La app Android verificará nuevas versiones al iniciar y permitirá instalarlas directamente.
+### 🛠️ Mejoras Técnicas:
+- Integración completa con **Supabase** para datos en tiempo real.
+- UX optimizada para dispositivos móviles mediante **Capacitor**.
+- Panel de administración avanzado para gestión de resultados y auditoría de apuestas.
+---
+**Nota para la instalación en Android:**
+Descarga el archivo `Penca2026uy.apk` adjunto aquí abajo. Si es la primera vez que instalas una app fuera de la Store, recuerda habilitar el permiso de *Instalar aplicaciones de fuentes desconocidas* en los ajustes de tu teléfono.
+
+
+
+
+
+
 
 ## Licencia
 
