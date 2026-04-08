@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Loader2, Users, Plus, Trophy, LogOut, Power, PowerOff } from 'lucide-react'
+import { Loader2, Users, Plus, Trophy, LogOut, Power, PowerOff, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -10,6 +10,7 @@ import {
   leaveSubgrupo,
   getUserSubgrupoCount,
   toggleSubgrupoActive,
+  deleteSubgrupo,
 } from '../services/subgrupoService'
 import { Modal } from '../components/ui/Modal'
 
@@ -59,6 +60,16 @@ export function SubgruposPage() {
       toast.success('Subgrupo actualizado')
     },
     onError: () => toast.error('Error al actualizar el subgrupo'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteSubgrupo(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my_subgrupos'] })
+      qc.invalidateQueries({ queryKey: ['subgrupo_count'] })
+      toast.success('Subgrupo eliminado')
+    },
+    onError: () => toast.error('Error al eliminar el subgrupo'),
   })
 
   if (!user || !isActive) {
@@ -161,20 +172,33 @@ export function SubgruposPage() {
                   <LogOut size={16} />
                 </button>
               )}
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    toggleMutation.mutate({ id: sg.id, val: !sg.is_active })
-                  }}
-                  title={sg.is_active ? 'Deshabilitar subgrupo' : 'Habilitar subgrupo'}
-                  className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                    sg.is_active
-                      ? 'text-text-muted hover:text-error hover:bg-error/10'
-                      : 'text-text-muted hover:text-primary hover:bg-primary/10'
-                  }`}
-                >
-                  {sg.is_active ? <PowerOff size={16} /> : <Power size={16} />}
-                </button>
+              {(isAdmin || sg.creator_id === user.id) && (
+                <div className="flex items-center">
+                  <button
+                    onClick={() => {
+                      toggleMutation.mutate({ id: sg.id, val: !sg.is_active })
+                    }}
+                    title={sg.is_active ? 'Deshabilitar subgrupo' : 'Habilitar subgrupo'}
+                    className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                      sg.is_active
+                        ? 'text-text-muted hover:text-error hover:bg-error/10'
+                        : 'text-text-muted hover:text-primary hover:bg-primary/10'
+                    }`}
+                  >
+                    {sg.is_active ? <PowerOff size={16} /> : <Power size={16} />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`¿Estás seguro de que querés ELIMINAR el subgrupo "${sg.name}"? Esta acción borrará a todos los miembros y no se puede deshacer.`)) {
+                        deleteMutation.mutate(sg.id)
+                      }
+                    }}
+                    title="Eliminar subgrupo"
+                    className="p-2 rounded-lg text-text-muted hover:text-error hover:bg-error/10 transition-colors flex-shrink-0"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               )}
             </div>
           ))}
