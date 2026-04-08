@@ -3,7 +3,7 @@ export function Footer() {
     <footer className="border-t border-border bg-surface mt-auto">
       <div className="max-w-5xl mx-auto px-4 py-6 text-center">
         <p className="text-text-muted text-xs leading-relaxed">
-          &copy; {new Date().getFullYear()} PencaLes — Creado por Nestor Lesna
+          &copy; {new Date().getFullYear()} PencaLes — Creado por Néstor Lesna
           <br />
           <a href="mailto:nestor.lesna@gmail.com" className="text-primary hover:underline">
             nestor.lesna@gmail.com
