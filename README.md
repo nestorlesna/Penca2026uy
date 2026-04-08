@@ -232,7 +232,44 @@ supabase/
 ### Supabase
 - Ejecutar los scripts SQL en orden (ver sección Setup)
 - Configurar buckets de Storage: `avatars` y `flags` (públicos)
-- Activar Auth provider: Email/Password
+- Activar Auth providers: Email/Password y Google (ver sección siguiente)
+
+### Configurar Login con Google (OAuth)
+
+#### 1. Google Cloud Console
+
+1. Ir a [console.cloud.google.com](https://console.cloud.google.com) → **APIs & Services → Credentials**
+2. Crear credencial: **OAuth 2.0 Client ID** → tipo **Web application**
+3. En **Authorized redirect URIs**, agregar la URL de callback de Supabase:
+   ```
+   https://<tu-proyecto>.supabase.co/auth/v1/callback
+   ```
+4. Copiar el **Client ID** y **Client Secret** generados
+
+#### 2. Supabase Dashboard
+
+1. Ir a **Authentication → Providers → Google**
+2. Habilitar el proveedor
+3. Pegar el **Client ID** y **Client Secret** obtenidos en el paso anterior
+4. Guardar
+
+> **Importante:** El Client ID y Client Secret son credenciales privadas. Nunca deben quedar en el código fuente ni en el README. Guardarlos únicamente en el dashboard de Supabase.
+
+#### Datos de la configuración actual
+
+| Campo | Valor |
+|-------|-------|
+| Supabase Redirect URL | `https://twdruhhhnsbrpyzlfxmg.supabase.co/auth/v1/callback` |
+| Client ID | Configurado en Supabase Dashboard |
+| Client Secret | Configurado en Supabase Dashboard (nunca exponer) |
+
+> Si necesitás regenerar las credenciales: Google Cloud Console → APIs & Services → Credentials → seleccionar el OAuth client → Edit → Regenerate secret. Luego actualizar en Supabase Dashboard.
+
+#### Comportamiento en la app
+
+- El botón **"Continuar con Google"** aparece en los tabs Ingresar y Registrarse.
+- Al autenticarse con Google por primera vez, el trigger de Supabase crea automáticamente el perfil en la tabla `profiles` con `is_active = false`.
+- El usuario debe ser aprobado por el administrador (Admin → Usuarios) antes de poder predecir, igual que con registro por email.
 
 ---
 
@@ -437,3 +474,5 @@ Descarga el archivo `Penca2026uy.apk` adjunto aquí abajo. Si es la primera vez 
 ## Licencia
 
 Proyecto privado · Todos los derechos reservados · 2025-2026
+
+

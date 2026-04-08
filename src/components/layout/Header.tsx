@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trophy, Menu, X, ShieldCheck, HelpCircle, QrCode } from 'lucide-react'
+import { Trophy, Menu, X, ShieldCheck, HelpCircle, QrCode, Smartphone } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -124,9 +124,18 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <Link to="/auth" className="btn-primary text-sm py-1.5 px-3">
-                Ingresar
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/descargar"
+                  title="Descargar App Android"
+                  className="p-2 text-text-muted hover:text-primary transition-colors flex items-center justify-center"
+                >
+                  <Smartphone size={20} />
+                </Link>
+                <Link to="/auth" className="btn-primary text-sm py-1.5 px-3">
+                  Ingresar
+                </Link>
+              </div>
             )}
 
             {/* Mobile hamburger */}
