@@ -137,15 +137,21 @@ export function AuthPage() {
   async function handleRecover(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!captchaToken) {
+      setError('Por favor completá la verificación de seguridad.')
+      return
+    }
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?tab=reset`
+      redirectTo: `${window.location.origin}/auth?tab=reset`,
+      captchaToken
     })
     if (error) {
       setError(traducirError(error.message))
     } else {
       setSuccess('Se ha enviado un correo con instrucciones para restablecer tu contraseña.')
       setEmail('')
+      setCaptchaToken(null)
     }
     setLoading(false)
   }
@@ -391,5 +397,6 @@ function traducirError(msg: string): string {
   if (msg.includes('Password should be'))        return 'La contraseña debe tener al menos 6 caracteres.'
   if (msg.includes('Unable to validate email'))  return 'El formato del email no es válido.'
   if (msg.includes('Email rate limit'))          return 'Demasiados intentos. Esperá unos minutos.'
+  if (msg.includes('captcha'))                   return 'Error en la verificación de seguridad (Captcha).'
   return msg
 }
