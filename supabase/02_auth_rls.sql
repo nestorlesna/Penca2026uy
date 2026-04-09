@@ -21,7 +21,7 @@ BEGIN
       NEW.raw_user_meta_data->>'name',
       split_part(NEW.email, '@', 1)
     ),
-    false,
+    true,
     false
   )
   ON CONFLICT (id) DO NOTHING;

@@ -48,16 +48,16 @@ function UsuariosContent() {
     p.display_name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const pending = filtered.filter(p => !p.is_active).length
+  const inactive = filtered.filter(p => !p.is_active).length
 
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-bold text-text-primary">Usuarios</h1>
-          {pending > 0 && (
+          {inactive > 0 && (
             <p className="text-xs text-error mt-0.5">
-              {pending} usuario{pending > 1 ? 's' : ''} inactivo{pending > 1 ? 's' : ''}
+              {inactive} usuario{inactive > 1 ? 's' : ''} inactivo{inactive > 1 ? 's' : ''}
             </p>
           )}
         </div>

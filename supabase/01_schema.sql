@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   username     VARCHAR(30) NOT NULL UNIQUE,
   display_name VARCHAR(60) NOT NULL,
   avatar_url   VARCHAR(255),
-  is_active    BOOLEAN     NOT NULL DEFAULT false,  -- Admin debe aprobar
+  is_active    BOOLEAN     NOT NULL DEFAULT true,   -- Activo por defecto; admin puede inactivar
   is_admin     BOOLEAN     NOT NULL DEFAULT false,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
