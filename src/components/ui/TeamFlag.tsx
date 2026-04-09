@@ -5,6 +5,7 @@ interface Props {
   slotLabel?: string | null
   size?: 'sm' | 'md' | 'lg'
   align?: 'left' | 'right'
+  abbrev?: boolean
 }
 
 const sizes = {
@@ -13,11 +14,13 @@ const sizes = {
   lg: { flag: 'w-9 h-9', text: 'text-base font-medium' },
 }
 
-export function TeamFlag({ team, slotLabel, size = 'md', align = 'left' }: Props) {
+export function TeamFlag({ team, slotLabel, size = 'md', align = 'left', abbrev = false }: Props) {
   const s = sizes[size]
-  const name = team
-    ? (team.is_confirmed ? team.name : team.placeholder_name ?? team.name)
-    : (slotLabel ?? '?')
+  const name = abbrev
+    ? (team?.abbreviation ?? slotLabel ?? '?')
+    : team
+      ? (team.is_confirmed ? team.name : team.placeholder_name ?? team.name)
+      : (slotLabel ?? '?')
 
   const isRight = align === 'right'
 
