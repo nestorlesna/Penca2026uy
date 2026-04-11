@@ -1,6 +1,14 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Trophy, User } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
+import { fetchUserPredictions } from '../services/predictionService'
+import {
+  fetchTeamsInGroups,
+  fetchSlotRules,
+  buildVirtualMatchMap,
+} from '../utils/virtualBracket'
 import type { MatchWithRelations } from '../types/match'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -12,8 +20,10 @@ const STROKE  = '#2E3A4D'
 const MID     = CONN_W / 2
 
 // ── Match orderings (top → bottom) ───────────────────────────────────────────
-// Pairs: R32[0,1]→R16[0], R32[2,3]→R16[1], ... R16[0,1]→QF[0], etc.
-const ALL_R32 = [73, 74, 75, 77, 81, 82, 83, 84, 76, 78, 79, 80, 85, 86, 87, 88]
+// Ordered so visual pairs match the actual R16 feeders:
+// [74,77]→M89  [73,75]→M90  [83,84]→M93  [81,82]→M94
+// [76,78]→M91  [79,80]→M92  [86,88]→M95  [85,87]→M96
+const ALL_R32 = [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87]
 const ALL_R16 = [89, 90, 93, 94, 91, 92, 95, 96]
 const ALL_QF  = [97, 98, 99, 100]
 const ALL_SF  = [101, 102]
@@ -21,8 +31,6 @@ const FINAL   = 104
 const THIRD   = 103
 
 // ── Connector path generation ─────────────────────────────────────────────────
-// Each level groups pairs of input slots into one output slot at their midpoint.
-// slotH = height of each slot in the INPUT column
 function makePairPaths(count: number, slotH: number, topOffset: number): string[] {
   const paths: string[] = []
   for (let i = 0; i < count; i++) {
@@ -35,13 +43,9 @@ function makePairPaths(count: number, slotH: number, topOffset: number): string[
   return paths
 }
 
-// R32 slot height = UNIT (64px), first center at UNIT/2 (32px)
 const R32_R16 = makePairPaths(8,  UNIT,      UNIT / 2)
-// R16 slot height = 2*UNIT (128px), first center at UNIT (64px)
 const R16_QF  = makePairPaths(4,  UNIT * 2,  UNIT)
-// QF  slot height = 4*UNIT (256px), first center at 2*UNIT (128px)
 const QF_SF   = makePairPaths(2,  UNIT * 4,  UNIT * 2)
-// SF  slot height = 8*UNIT (512px), first center at 4*UNIT (256px)
 const SF_FIN  = makePairPaths(1,  UNIT * 8,  UNIT * 4)
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -80,15 +84,21 @@ async function fetchKnockout(): Promise<MatchMap> {
 
 // ── Team row ──────────────────────────────────────────────────────────────────
 function TeamRow({
-  team, label, score, suffix, winner, loser,
+  team, label, score, etTotal, suffix, winner, loser,
 }: {
   team: MatchWithRelations['home_team'] | null
   label: string
   score: number | null
+  etTotal?: number | null   // total after ET (90 + additional ET goals); shown as "score-etTotal"
   suffix?: string
   winner: boolean
   loser: boolean
 }) {
+  // Build score string: "1" / "1-2" / "1-1P" etc.
+  const scoreStr = score !== null
+    ? (etTotal != null ? `${score}-${etTotal}` : String(score))
+    : null
+
   return (
     <div className={`flex items-center gap-1.5 px-2 py-[5px] ${winner ? 'bg-primary/10' : ''}`}>
       {team?.flag_url ? (
@@ -101,9 +111,9 @@ function TeamRow({
       }`}>
         {label}
       </span>
-      {score !== null && (
+      {scoreStr !== null && (
         <span className={`text-xs font-bold tabular-nums ${winner ? 'text-primary' : 'text-text-muted'}`}>
-          {score}{suffix ?? ''}
+          {scoreStr}{suffix ?? ''}
         </span>
       )}
     </div>
@@ -119,10 +129,14 @@ function MatchCard({ matchNum, matchMap }: { matchNum: number; matchMap: MatchMa
   const awayLabel = away?.is_confirmed ? away.abbreviation : (m?.away_slot_label ?? '?')
 
   const played    = m != null && m.home_score_90 !== null && m.away_score_90 !== null
+  const hasEt     = played && m!.home_score_et !== null
   const pkDecided = played && m!.home_score_pk !== null
 
-  const homeScore = played ? m!.home_score_90! + (m!.home_score_et ?? 0) : null
-  const awayScore = played ? m!.away_score_90! + (m!.away_score_et ?? 0) : null
+  const homeScore  = played ? m!.home_score_90! : null
+  const awayScore  = played ? m!.away_score_90! : null
+  // ET total (90min + additional ET goals) shown inline as "90-total"
+  const homeEtTotal = hasEt ? m!.home_score_90! + m!.home_score_et! : null
+  const awayEtTotal = hasEt ? m!.away_score_90! + m!.away_score_et! : null
 
   const homeWin = played && !!home && m!.winner_team_id === home.id
   const awayWin = played && !!away && m!.winner_team_id === away.id
@@ -135,9 +149,9 @@ function MatchCard({ matchNum, matchMap }: { matchNum: number; matchMap: MatchMa
       <div className="px-2 py-[2px] bg-surface-2 border-b border-border">
         <span className="text-[9px] text-text-muted font-medium">M{matchNum}</span>
       </div>
-      <TeamRow team={home} label={homeLabel} score={homeScore} suffix={homeSuffix} winner={homeWin} loser={awayWin} />
+      <TeamRow team={home} label={homeLabel} score={homeScore} etTotal={homeEtTotal} suffix={homeSuffix} winner={homeWin} loser={awayWin} />
       <div className="h-px bg-border" />
-      <TeamRow team={away} label={awayLabel} score={awayScore} suffix={awaySuffix} winner={awayWin} loser={homeWin} />
+      <TeamRow team={away} label={awayLabel} score={awayScore} etTotal={awayEtTotal} suffix={awaySuffix} winner={awayWin} loser={homeWin} />
     </div>
   )
 }
@@ -191,59 +205,162 @@ function PhaseHeaders() {
   )
 }
 
+// ── Bracket layout (shared by both tabs) ──────────────────────────────────────
+function BracketLayout({ matchMap }: { matchMap: MatchMap }) {
+  const totalW = 5 * CARD_W + 4 * CONN_W
+
+  return (
+    <div className="overflow-x-auto pb-4">
+      <div style={{ minWidth: totalW }}>
+        <PhaseHeaders />
+
+        <div className="flex" style={{ height: TOTAL_H }}>
+          <BracketCol matchNums={ALL_R32} matchMap={matchMap} />
+          <Connector paths={R32_R16} />
+          <BracketCol matchNums={ALL_R16} matchMap={matchMap} />
+          <Connector paths={R16_QF} />
+          <BracketCol matchNums={ALL_QF}  matchMap={matchMap} />
+          <Connector paths={QF_SF} />
+          <BracketCol matchNums={ALL_SF}  matchMap={matchMap} />
+          <Connector paths={SF_FIN} />
+          <BracketCol matchNums={[FINAL]} matchMap={matchMap} />
+        </div>
+
+        <div
+          className="flex flex-col items-center gap-2 mt-6 pt-4 border-t border-border"
+          style={{ marginLeft: 4 * (CARD_W + CONN_W), width: CARD_W }}
+        >
+          <span className="text-[10px] text-text-muted uppercase tracking-wide font-semibold">
+            3° Puesto
+          </span>
+          <MatchCard matchNum={THIRD} matchMap={matchMap} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Mi Cuadro tab ─────────────────────────────────────────────────────────────
+function MiCuadro({ userId, knockoutMatches }: {
+  userId: string
+  knockoutMatches: MatchWithRelations[]
+}) {
+  const { data: virtualMap, isLoading, isError } = useQuery({
+    queryKey: ['virtualBracket', userId],
+    queryFn: async () => {
+      const [teams, rules, predictions] = await Promise.all([
+        fetchTeamsInGroups(),
+        fetchSlotRules(),
+        fetchUserPredictions(userId),
+      ])
+      return buildVirtualMatchMap(teams, rules, knockoutMatches, predictions)
+    },
+    staleTime: 1000 * 60,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="animate-spin text-primary" size={28} />
+      </div>
+    )
+  }
+
+  if (isError || !virtualMap) {
+    return (
+      <p className="text-center text-text-secondary py-12 text-sm">
+        No se pudo generar tu cuadro. Intentá de nuevo más tarde.
+      </p>
+    )
+  }
+
+  const predCount = Array.from(virtualMap.values())
+    .filter(m => m.home_score_90 !== null).length
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl bg-surface border border-border px-4 py-3 text-sm text-text-secondary">
+        Este es el cuadro final según tus predicciones. Los equipos avanzan de
+        acuerdo a los resultados que vos apostaste en los partidos de grupos y
+        eliminatorias.
+        {predCount === 0 && (
+          <span className="block mt-1 text-accent font-medium">
+            Todavía no tenés predicciones cargadas — cargá tus apuestas en la sección Fixture.
+          </span>
+        )}
+      </div>
+      <BracketLayout matchMap={virtualMap} />
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
+type Tab = 'torneo' | 'mio'
+
 export function BracketPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('torneo')
+  const { user } = useAuth()
+
   const { data: matchMap = new Map<number, MatchWithRelations>(), isLoading } = useQuery({
     queryKey: ['bracket'],
     queryFn: fetchKnockout,
     staleTime: 1000 * 60,
   })
 
-  const totalW = 5 * CARD_W + 4 * CONN_W  // 800px
+  const knockoutMatches = Array.from(matchMap.values())
 
   return (
     <div className="px-4 py-6 space-y-4">
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-text-primary">Cuadro del torneo</h1>
+        <h1 className="text-xl font-bold text-text-primary">Cuadro</h1>
         <p className="text-xs text-text-muted mt-1">
           Fase eliminatoria · Dieciseisavos → Final
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface rounded-xl p-1 border border-border">
+        <button
+          onClick={() => setActiveTab('torneo')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'torneo'
+              ? 'bg-primary text-white'
+              : 'text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          <Trophy size={14} />
+          Cuadro del Torneo
+        </button>
+        <button
+          onClick={() => setActiveTab('mio')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'mio'
+              ? 'bg-primary text-white'
+              : 'text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          <User size={14} />
+          Mi Cuadro
+        </button>
+      </div>
+
+      {/* Content */}
       {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin text-primary" size={28} />
         </div>
-      ) : (
-        <div className="overflow-x-auto pb-4">
-          <div style={{ minWidth: totalW }}>
-            <PhaseHeaders />
-
-            {/* Bracket: R32 → R16 → QF → SF → Final */}
-            <div className="flex" style={{ height: TOTAL_H }}>
-              <BracketCol matchNums={ALL_R32} matchMap={matchMap} />
-              <Connector paths={R32_R16} />
-              <BracketCol matchNums={ALL_R16} matchMap={matchMap} />
-              <Connector paths={R16_QF} />
-              <BracketCol matchNums={ALL_QF}  matchMap={matchMap} />
-              <Connector paths={QF_SF} />
-              <BracketCol matchNums={ALL_SF}  matchMap={matchMap} />
-              <Connector paths={SF_FIN} />
-              <BracketCol matchNums={[FINAL]} matchMap={matchMap} />
-            </div>
-
-            {/* Tercer puesto — centrado bajo la columna Final */}
-            <div
-              className="flex flex-col items-center gap-2 mt-6 pt-4 border-t border-border"
-              style={{ marginLeft: 4 * (CARD_W + CONN_W), width: CARD_W }}
-            >
-              <span className="text-[10px] text-text-muted uppercase tracking-wide font-semibold">
-                3° Puesto
-              </span>
-              <MatchCard matchNum={THIRD} matchMap={matchMap} />
-            </div>
-          </div>
+      ) : activeTab === 'torneo' ? (
+        <BracketLayout matchMap={matchMap} />
+      ) : !user ? (
+        <div className="text-center py-16 space-y-2">
+          <User size={40} className="mx-auto text-text-muted" />
+          <p className="text-text-secondary text-sm">
+            Iniciá sesión para ver tu cuadro personalizado.
+          </p>
         </div>
+      ) : (
+        <MiCuadro userId={user.id} knockoutMatches={knockoutMatches} />
       )}
     </div>
   )

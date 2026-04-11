@@ -81,17 +81,15 @@ export function PredictionModal({ match, existing, onClose }: Props) {
       const showEt = isKnockout && draw90
       const drawEt = showEt && form.homeScoreEt === form.awayScoreEt
       const showPk = showEt && drawEt
-      const teamsConfirmed = !!(match.home_team && match.away_team)
 
       if (isKnockout && draw90 && (form.homeScoreEt === undefined)) {
         throw new Error('Ingresá el resultado en tiempo extra')
       }
-      if (showPk && teamsConfirmed && !form.pkWinnerId) {
+      if (showPk && !form.pkWinnerId) {
         throw new Error('Seleccioná el ganador en penales')
       }
 
-      // Solo guardar pk winner si es un ID real de equipo (equipos confirmados)
-      const pkWinnerId = showPk && teamsConfirmed && form.pkWinnerId ? form.pkWinnerId : null
+      const pkWinnerId = showPk && form.pkWinnerId ? form.pkWinnerId : null
 
       await upsertPrediction(user.id, {
         matchId: match.id,
@@ -126,6 +124,7 @@ export function PredictionModal({ match, existing, onClose }: Props) {
   if (!match) return null
 
   const isKnockout = match.phase.has_extra_time
+  const teamsConfirmed = !!(match.home_team?.is_confirmed && match.away_team?.is_confirmed)
   const draw90 = form.homeScore === form.awayScore
   const showEt = isKnockout && draw90
   const drawEt = showEt && form.homeScoreEt === form.awayScoreEt
@@ -138,6 +137,16 @@ export function PredictionModal({ match, existing, onClose }: Props) {
       title={`Partido #${match.match_number}`}
       size="sm"
     >
+      {!teamsConfirmed ? (
+        <div className="py-6 text-center space-y-3">
+          <p className="text-text-secondary text-sm">
+            Este partido aún no tiene los equipos confirmados.
+          </p>
+          <p className="text-text-muted text-xs">
+            Podrás ingresar tu predicción una vez que se definan los clasificados.
+          </p>
+        </div>
+      ) : (
       <div className="space-y-5">
         {/* 90 minutos */}
         <div>
@@ -175,35 +184,32 @@ export function PredictionModal({ match, existing, onClose }: Props) {
 
         {/* Penales */}
         {isKnockout && (() => {
-          const teamsConfirmed = !!(match.home_team && match.away_team)
           const pkCandidates = [
-            { id: match.home_team?.id ?? 'home', label: match.home_team?.abbreviation ?? match.home_slot_label ?? 'Local' },
-            { id: match.away_team?.id ?? 'away', label: match.away_team?.abbreviation ?? match.away_slot_label ?? 'Visit.' },
+            { id: match.home_team!.id, label: match.home_team!.abbreviation },
+            { id: match.away_team!.id, label: match.away_team!.abbreviation },
           ]
           return (
             <div className={`transition-opacity ${showPk ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
               <p className="text-[11px] text-text-muted uppercase tracking-wide mb-3 text-center">
                 Ganador en penales {!showPk && '(solo si hay empate en ET)'}
               </p>
-              {!teamsConfirmed && showPk && (
-                <p className="text-[11px] text-text-muted text-center mb-2">
-                  Se podrá guardar cuando los equipos sean confirmados
-                </p>
-              )}
               <div className="flex gap-2">
                 {pkCandidates.map(candidate => {
                   const isSelected = form.pkWinnerId === candidate.id
+                  const btnDisabled = !showPk
                   return (
                     <button
                       key={candidate.id}
                       type="button"
                       className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                        isSelected
-                          ? 'border-primary bg-primary/20 text-primary'
-                          : 'border-border bg-surface-2 text-text-secondary hover:border-primary/40'
+                        btnDisabled
+                          ? 'border-border bg-surface-2 text-text-muted cursor-not-allowed opacity-40'
+                          : isSelected
+                            ? 'border-primary bg-primary/20 text-primary'
+                            : 'border-border bg-surface-2 text-text-secondary hover:border-primary/40'
                       }`}
-                      onClick={() => setForm(f => ({ ...f, pkWinnerId: candidate.id }))}
-                      disabled={!showPk}
+                      onClick={() => !btnDisabled && setForm(f => ({ ...f, pkWinnerId: candidate.id }))}
+                      disabled={btnDisabled}
                     >
                       {candidate.label}
                     </button>
@@ -234,6 +240,7 @@ export function PredictionModal({ match, existing, onClose }: Props) {
           )}
         </div>
       </div>
+      )}
     </Modal>
   )
 }

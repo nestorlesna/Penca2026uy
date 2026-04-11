@@ -413,16 +413,17 @@ Editar la raíz del repo con los nuevos datos:
 
 **3. Generar el APK firmado**
 
+Primero sincronizar los cambios del build web con el proyecto Android:
+
 ```bash
 npm run cap:sync
-cd android
-./gradlew assembleRelease
-# En Windows: gradlew.bat assembleRelease
 ```
 
-O desde Android Studio: **Build → Generate Signed Bundle / APK → APK → Release**
+Luego en **Android Studio**:
 
-El APK queda en `android/app/build/outputs/apk/release/`.
+1. **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+2. Esperar que termine el build
+3. El APK queda en `android/app/build/outputs/apk/debug/Penca2026uy.apk`
 
 **4. Hacer commit y push**
 
