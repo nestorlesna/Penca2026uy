@@ -89,11 +89,11 @@ function PredecirTab() {
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
-                    <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
+                    <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" abbrev />
                   </div>
                   <span className="text-text-muted text-xs">vs</span>
                   <div className="flex-1 min-w-0 flex justify-end">
-                    <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
+                    <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" abbrev />
                   </div>
                 </div>
                 <p className="text-[11px] text-text-muted">
@@ -191,7 +191,7 @@ function HistorialTab() {
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2 text-xs">
                 <div className="flex-1 min-w-0">
-                  <TeamFlag team={m.home_team} slotLabel={m.home_slot_label} size="sm" align="left" />
+                  <TeamFlag team={m.home_team} slotLabel={m.home_slot_label} size="sm" align="left" abbrev />
                 </div>
 
                 <div className="flex-shrink-0 text-center space-y-0.5">
@@ -213,7 +213,7 @@ function HistorialTab() {
                 </div>
 
                 <div className="flex-1 min-w-0 flex justify-end">
-                  <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="right" />
+                  <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="right" abbrev />
                 </div>
               </div>
             </div>

@@ -49,7 +49,7 @@ export function Header() {
             <DeskNavLink to="/ranking">Ranking</DeskNavLink>
             {user && <DeskNavLink to="/subgrupos">Subgrupos</DeskNavLink>}
             <DeskNavLink to="/cuadro">Cuadro</DeskNavLink>
-            {user && <DeskNavLink to="/mis-predicciones">Apuestas</DeskNavLink>}
+            {user && <DeskNavLink to="/mis-predicciones">Jugar</DeskNavLink>}
             {user && <DeskNavLink to="/mas-puntos">+ Puntos</DeskNavLink>}
             <DeskNavLink to="/ayuda">
               <HelpCircle size={14} className="inline mr-1" />Ayuda
@@ -158,7 +158,7 @@ export function Header() {
             <MobileNavLink to="/ranking">Ranking</MobileNavLink>
             {user && <MobileNavLink to="/subgrupos">Subgrupos</MobileNavLink>}
             <MobileNavLink to="/cuadro">Cuadro</MobileNavLink>
-            {user && <MobileNavLink to="/mis-predicciones">Apuestas</MobileNavLink>}
+            {user && <MobileNavLink to="/mis-predicciones">Jugar</MobileNavLink>}
             {user && <MobileNavLink to="/mas-puntos">+ Puntos</MobileNavLink>}
             {user && <MobileNavLink to="/perfil">Mi perfil</MobileNavLink>}
 {user && <MobileNavLink to="/descargar">Descargar app</MobileNavLink>}

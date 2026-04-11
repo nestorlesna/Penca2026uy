@@ -10,7 +10,7 @@ const navItems = [
   { to: '/grupos', icon: LayoutGrid, label: 'Grupos' },
   { to: '/ranking', icon: Trophy, label: 'Ranking' },
   { to: '/subgrupos', icon: Users, label: 'Subgrupos', authRequired: true },
-  { to: '/mis-predicciones', icon: Star, label: 'Apuestas', authRequired: true },
+  { to: '/mis-predicciones', icon: Star, label: 'Jugar', authRequired: true },
   ...(isNative
     ? [{ to: '/ayuda', icon: HelpCircle, label: 'Ayuda' }]
     : [{ to: '/perfil', icon: User, label: 'Perfil', authRequired: true }]
