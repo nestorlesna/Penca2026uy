@@ -12,7 +12,7 @@ Aplicación web de predicciones para la Copa Mundial de Fútbol FIFA 2026. Los u
 - **Fixture** — grilla completa de los 104 partidos, filtrable por fase/grupo/fecha
 - **Grupos** — tablas de posiciones en tiempo real con criterios FIFA (Pts → DG → GF)
 - **Cuadro** — bracket visual del torneo eliminatorio (dieciseisavos → Final) con banderas y marcadores
-- **Mis apuestas** — historial de predicciones y puntos ganados por partido
+- **Mis apuestas** — historial de predicciones y puntos ganados por partido; tab **Mi Cuadro** con el bracket eliminatorio personal
 - **+ Puntos** — apuestas especiales antes del torneo (podio, empates, rango de goles, etc.) con resultado real y puntos ganados visibles por sección
 - **Ranking** — tabla de líderes global con puntos totales (partidos + bonus)
 - **Subgrupos** — agrupaciones privadas entre jugadores con ranking propio (cada usuario puede crear hasta 3)
@@ -87,6 +87,7 @@ supabase/09_combinaciones.sql    # 495 combinaciones FIFA de mejores terceros
 supabase/10_recalculate_all.sql  # Función de recálculo global
 supabase/11_loader_role.sql      # Rol de cargador de resultados
 supabase/12_subgrupos.sql        # Tablas, RLS, funciones y vistas de subgrupos
+supabase/13_admin_functions.sql  # Funciones auxiliares para el panel de admin (email + conteo de apuestas)
 supabase/00_reset_init.sql       # Carga datos del torneo (grupos, equipos, partidos, etc.)
 ```
 
@@ -217,7 +218,8 @@ supabase/
 ├── 09_combinaciones.sql       # 495 combinaciones FIFA de mejores terceros
 ├── 10_recalculate_all.sql     # recalculate_all() — recálculo global idempotente
 ├── 11_loader_role.sql         # Rol de cargador de resultados
-└── 12_subgrupos.sql           # subgrupos, subgrupo_members, RLS, RPC, triggers, vistas
+├── 12_subgrupos.sql           # subgrupos, subgrupo_members, RLS, RPC, triggers, vistas
+└── 13_admin_functions.sql     # admin_get_user_details() — email + conteo de apuestas por usuario
 ```
 
 ---
@@ -268,8 +270,8 @@ supabase/
 #### Comportamiento en la app
 
 - El botón **"Continuar con Google"** aparece en los tabs Ingresar y Registrarse.
-- Al autenticarse con Google por primera vez, el trigger de Supabase crea automáticamente el perfil en la tabla `profiles` con `is_active = false`.
-- El usuario debe ser aprobado por el administrador (Admin → Usuarios) antes de poder predecir, igual que con registro por email.
+- Al autenticarse con Google por primera vez, el trigger de Supabase crea automáticamente el perfil en la tabla `profiles` con `is_active = true`.
+- Los usuarios quedan activos por defecto y pueden predecir de inmediato. El administrador puede desactivarlos desde Admin → Usuarios si es necesario.
 
 ---
 
