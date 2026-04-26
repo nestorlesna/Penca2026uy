@@ -1,4 +1,4 @@
-import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 
 interface Props {
   versionName: string
@@ -9,8 +9,12 @@ interface Props {
 }
 
 export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, onDismiss }: Props) {
-  async function handleDownload() {
-    await Browser.open({ url: apkUrl })
+  function handleDownload() {
+    if (Capacitor.isNativePlatform()) {
+      window.open(apkUrl, '_system')
+    } else {
+      window.open(apkUrl, '_blank')
+    }
   }
 
   return (
