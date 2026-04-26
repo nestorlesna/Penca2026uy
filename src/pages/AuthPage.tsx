@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { Trophy, Loader2, Eye, EyeOff, Clock } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { Captcha } from '../components/ui/Captcha'
@@ -159,11 +160,29 @@ export function AuthPage() {
   async function handleGoogleLogin() {
     setError(null)
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/fixture` },
-    })
-    if (error) setError(traducirError(error.message))
+
+    if (Capacitor.isNativePlatform()) {
+      // En la APK: redirigir a /auth-callback en Vercel (URL HTTPS que Supabase acepta).
+      // Esa página luego redirige a com.pencales.app://, que Android intercepta
+      // y devuelve el control a la APK vía appUrlOpen (OAuthCallbackHandler en App.tsx).
+      // skipBrowserRedirect evita que supabase-js toque el WebView de la APK.
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'https://penca2026uy.vercel.app/auth-callback',
+          skipBrowserRedirect: true,
+        },
+      })
+      if (error) { setError(traducirError(error.message)); setLoading(false); return }
+      if (data.url) window.open(data.url, '_system')
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth-callback` },
+      })
+      if (error) setError(traducirError(error.message))
+    }
+
     setLoading(false)
   }
 

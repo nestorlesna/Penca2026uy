@@ -50,7 +50,7 @@ Aplicación web de predicciones para la Copa Mundial de Fútbol FIFA 2026. Los u
 ## Setup local
 
 ### Requisitos
-- Node.js 18+
+- Node.js 22+
 - Cuenta en [Supabase](https://supabase.com)
 
 ### 1. Clonar e instalar
@@ -282,7 +282,7 @@ La app móvil se genera con Capacitor, que empaqueta el build web en una app nat
 ### Requisitos
 - **Android Studio** ([descargar](https://developer.android.com/studio))
 - **JDK 17+** (viene incluido con Android Studio)
-- **Node.js 18+**
+- **Node.js 22+** (requerido por Capacitor 8)
 
 ### Primer setup
 

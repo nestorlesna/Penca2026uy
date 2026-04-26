@@ -196,16 +196,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configurar Node.js
+      # 2. Configurar Node.js (≥22 requerido por Capacitor 8)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       # 3. Instalar dependencias web
+      # npm install en lugar de npm ci: el lock file generado en Windows no incluye
+      # los binarios nativos de Linux (@emnapi/*) que sharp y otros paquetes nativos
+      # requieren en el runner de Ubuntu. npm ci falla con "Missing from lock file".
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # 4. Build del proyecto web (Vite)
       - name: Build web app
@@ -341,8 +344,13 @@ param(
 $GradlePath    = "android/app/build.gradle"
 $VersionTsPath = "src/config/version.ts"
 
+# Set-Content con -Encoding UTF8 en PowerShell 5 escribe UTF-8 CON BOM, lo que
+# rompe Gradle ("Unexpected character: '﻿'") y Vite ("stream did not contain valid UTF-8").
+# [System.IO.File]::WriteAllText() con UTF8Encoding($false) escribe siempre sin BOM.
+$Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+
 # ── 1. build.gradle ────────────────────────────────────────────────────────────
-$Content = Get-Content $GradlePath -Raw
+$Content = Get-Content $GradlePath -Raw -Encoding UTF8
 
 $CurrentCode = [regex]::Match($Content, 'versionCode\s+(\d+)').Groups[1].Value
 $NewCode     = [int]$CurrentCode + 1
@@ -351,14 +359,14 @@ Write-Host "Bumping build.gradle: versionCode $CurrentCode → $NewCode, version
 
 $Content = $Content -replace "versionCode\s+$CurrentCode", "versionCode $NewCode"
 $Content = $Content -replace 'versionName\s+"[^"]*"',      "versionName `"$Version`""
-Set-Content $GradlePath $Content -NoNewline
+[System.IO.File]::WriteAllText((Resolve-Path $GradlePath), $Content, $Utf8NoBom)
 
 # ── 2. src/config/version.ts ───────────────────────────────────────────────────
 # APP_VERSION debe coincidir con versionName para que el sistema de actualización
 # automática compare correctamente la versión instalada contra la del servidor.
-$VTs = Get-Content $VersionTsPath -Raw
+$VTs = Get-Content $VersionTsPath -Raw -Encoding UTF8
 $VTs = $VTs -replace "APP_VERSION = '[^']*'", "APP_VERSION = '$Version'"
-Set-Content $VersionTsPath $VTs -NoNewline
+[System.IO.File]::WriteAllText((Resolve-Path $VersionTsPath), $VTs, $Utf8NoBom)
 Write-Host "Bumped src/config/version.ts: APP_VERSION → '$Version'"
 
 # ── 3. Commit y tag ────────────────────────────────────────────────────────────
@@ -762,6 +770,26 @@ El workflow de la sección 4 ya incluye esta versión corregida.
 ### Build lento (más de 10 minutos)
 - El cache de Gradle (step 7) reduce builds posteriores de ~8 min a ~3 min
 - Verificar que el cache key incluya los archivos `.gradle` correctos
+
+### "npm ci" falla con "Missing from lock file" (@emnapi/runtime, @emnapi/core)
+
+El lock file fue generado en Windows y no incluye los binarios nativos de Linux que `sharp` y otras dependencias nativas requieren en el runner Ubuntu. `npm ci` exige el lock perfecto.
+
+Solución: usar `npm install` en el step del workflow (ya corregido en la sección 4). `npm install` resuelve las dependencias de plataforma en tiempo de ejecución sin requerir lock exacto.
+
+### "Unexpected character: '﻿'" en build.gradle (BOM)
+
+`Set-Content -Encoding UTF8` en **PowerShell 5** escribe UTF-8 **con BOM** (`EF BB BF`). Gradle no acepta ese carácter al inicio del archivo.
+
+Solución: usar `[System.IO.File]::WriteAllText(path, content, [System.Text.UTF8Encoding]::new($false))` en el script de release (ya corregido en la sección 6). Esta API escribe UTF-8 sin BOM tanto en PS5 como en PS7.
+
+El mismo BOM en `version.json` rompe Vite con `"stream did not contain valid UTF-8"`.
+
+### "npm warn EBADENGINE — required: { node: '>=22.0.0' }"
+
+Capacitor 8 requiere Node.js ≥ 22. Si el workflow usa `node-version: '20'`, npm muestra el warning y puede fallar en la instalación de `@capacitor/cli`.
+
+Solución: `node-version: '22'` en el step de Setup Node.js (ya corregido en la sección 4).
 
 ### El modal de actualización no aparece
 - Confirmar que `APP_VERSION` en `src/config/version.ts` es menor al tag publicado en GitHub

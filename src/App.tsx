@@ -1,6 +1,10 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
+import { App as CapApp } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
+import { supabase } from './lib/supabase'
 
 import { Layout } from './components/layout/Layout'
 import { FixturePage } from './pages/FixturePage'
@@ -27,6 +31,7 @@ import { MasPuntosPage } from './pages/MasPuntosPage'
 import { SubgruposPage } from './pages/SubgruposPage'
 import { SubgrupoDetailPage } from './pages/SubgrupoDetailPage'
 import { DescargarAppPage } from './pages/DescargarAppPage'
+import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
 import { UpdateModal } from './components/ui/UpdateModal'
 
@@ -36,11 +41,46 @@ const queryClient = new QueryClient({
   },
 })
 
+// Procesa el deep link com.pencales.app://login-callback que Supabase emite
+// tras el OAuth de Google en la APK. Extrae el code (PKCE) o los tokens del hash
+// (implicit flow) y establece la sesión; useAuth reacciona y redirige automáticamente.
+function OAuthCallbackHandler() {
+  useEffect(() => {
+    const listenerPromise = CapApp.addListener('appUrlOpen', async ({ url }) => {
+      if (!url.startsWith('com.pencales.app://login-callback')) return
+      try {
+        const urlObj = new URL(url)
+        const code = urlObj.searchParams.get('code')
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code)
+          await Browser.close().catch(() => {})
+          return
+        }
+        const hash = url.split('#')[1]
+        if (hash) {
+          const params = new URLSearchParams(hash)
+          const accessToken = params.get('access_token')
+          const refreshToken = params.get('refresh_token')
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+            await Browser.close().catch(() => {})
+          }
+        }
+      } catch {
+        // URL malformada o tokens ausentes — ignorar
+      }
+    })
+    return () => { listenerPromise.then(l => l.remove()) }
+  }, [])
+  return null
+}
+
 function AppContent() {
   const { update, dismiss } = useUpdateCheck()
 
   return (
     <>
+      <OAuthCallbackHandler />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -54,6 +94,7 @@ function AppContent() {
             <Route path="perfil"            element={<PerfilPage />} />
             <Route path="descargar"         element={<DescargarAppPage />} />
             <Route path="auth"              element={<AuthPage />} />
+            <Route path="auth-callback"     element={<AuthCallbackPage />} />
             <Route path="ayuda"             element={<AyudaPage />} />
             <Route path="cuadro"            element={<BracketPage />} />
             <Route path="mas-puntos"        element={<MasPuntosPage />} />
