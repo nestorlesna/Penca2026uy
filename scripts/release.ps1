@@ -22,7 +22,7 @@ Write-Host "build.gradle: versionCode $CurrentCode → $NewCode  |  versionName 
 
 $Gradle = $Gradle -replace "versionCode\s+$CurrentCode",      "versionCode $NewCode"
 $Gradle = $Gradle -replace 'versionName\s+"[^"]*"',           "versionName `"$Version`""
-Set-Content $GradlePath $Gradle -NoNewline
+Set-Content $GradlePath $Gradle -NoNewline -Encoding UTF8
 
 # ── 2. version.json ────────────────────────────────────────────────────────────
 $ApkUrl = "https://github.com/$GithubOwner/$GithubRepo/releases/download/v$Version/$ApkName"
@@ -35,7 +35,7 @@ $Json = [ordered]@{
     force_update   = $false
 } | ConvertTo-Json
 
-Set-Content $VersionJson $Json -NoNewline
+Set-Content $VersionJson $Json -NoNewline -Encoding UTF8
 Write-Host "version.json: version_code=$NewCode  version_name=$Version"
 Write-Host "             apk_url=$ApkUrl"
 
