@@ -20,7 +20,10 @@
       "WebFetch(domain:www.cbssports.com)",
       "Bash(wc:*)",
       "Bash(grep -n \"best_third_ranking\" /c/DATOS/DESARROLLOS/React/Penca2026uy/supabase/*.sql)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

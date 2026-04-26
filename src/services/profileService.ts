@@ -1,6 +1,12 @@
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../types'
 
+export interface AdminUserDetail {
+  id: string
+  email: string
+  predictions_count: number
+}
+
 export async function updateProfile(
   userId: string,
   data: Partial<Pick<Profile, 'display_name' | 'avatar_url'>>
@@ -31,6 +37,12 @@ export async function fetchAllProfiles(): Promise<Profile[]> {
     .order('created_at', { ascending: false })
   if (error) throw error
   return (data ?? []) as Profile[]
+}
+
+export async function fetchAdminUserDetails(): Promise<AdminUserDetail[]> {
+  const { data, error } = await supabase.rpc('admin_get_user_details')
+  if (error) throw error
+  return (data ?? []) as AdminUserDetail[]
 }
 
 export async function setUserActive(userId: string, isActive: boolean) {
