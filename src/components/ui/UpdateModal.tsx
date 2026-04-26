@@ -1,3 +1,5 @@
+import { Browser } from '@capacitor/browser'
+
 interface Props {
   versionName: string
   apkUrl: string
@@ -7,11 +9,8 @@ interface Props {
 }
 
 export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, onDismiss }: Props) {
-  function handleDownload() {
-    // _system abre en el browser del sistema: dispara el download manager de Android
-    // correctamente para APKs. Chrome Custom Tabs (Browser plugin) no maneja bien
-    // las descargas de archivos .apk.
-    window.open(apkUrl, '_system')
+  async function handleDownload() {
+    await Browser.open({ url: apkUrl })
   }
 
   return (
