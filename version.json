@@ -1,7 +1,7 @@
 {
-    "version_code":  22,
-    "version_name":  "1.0.22",
-    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.22/Penca2026uy.apk",
+    "version_code":  23,
+    "version_name":  "1.0.23",
+    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.23/Penca2026uy.apk",
     "release_notes":  "\n  ## 🚀 PencaLes 2026 - ¡Lanzamiento Oficial!\nEsta versión marca la primera entrega estable de la aplicación diseñada para vivir la emoción del Mundial 2026. \n### ✨ Funcionalidades Destacadas:\n- 📅 **Fixture Completo:** Los 104 partidos cargados y listos para predecir.\n- 📊 **Tablas en Tiempo Real:** Seguimiento de grupos con criterios oficiales de desempate FIFA.\n- 🏆 **Cuadro Eliminatorio:** Visualización dinámica del bracket desde dieciseisavos hasta la Final.\n- 🥇 **Ranking Global:** Compite con todos los usuarios por el primer puesto.\n- 👥 **Subgrupos:** Crea tus propias ligas privadas con amigos o compañeros de trabajo.\n- 💎 **+ Puntos:** Apuestas especiales (Podio, Goleador, Rango de goles, etc.) para sumar puntos extra.\n- 🔄 **Actualización Automática:** La app Android verificará nuevas versiones al iniciar y permitirá instalarlas directamente.",
     "force_update":  false
 }
