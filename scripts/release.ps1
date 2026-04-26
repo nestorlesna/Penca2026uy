@@ -11,9 +11,10 @@ $VersionJson  = "version.json"
 $GithubOwner  = "nestorlesna"
 $GithubRepo   = "Penca2026uy"
 $ApkName      = "Penca2026uy.apk"
+$Utf8NoBom    = [System.Text.UTF8Encoding]::new($false)
 
 # ── 1. build.gradle ────────────────────────────────────────────────────────────
-$Gradle = Get-Content $GradlePath -Raw
+$Gradle = Get-Content $GradlePath -Raw -Encoding UTF8
 
 $CurrentCode = [regex]::Match($Gradle, 'versionCode\s+(\d+)').Groups[1].Value
 $NewCode     = [int]$CurrentCode + 1
@@ -22,7 +23,7 @@ Write-Host "build.gradle: versionCode $CurrentCode → $NewCode  |  versionName 
 
 $Gradle = $Gradle -replace "versionCode\s+$CurrentCode",      "versionCode $NewCode"
 $Gradle = $Gradle -replace 'versionName\s+"[^"]*"',           "versionName `"$Version`""
-Set-Content $GradlePath $Gradle -NoNewline -Encoding UTF8
+[System.IO.File]::WriteAllText((Resolve-Path $GradlePath), $Gradle, $Utf8NoBom)
 
 # ── 2. version.json ────────────────────────────────────────────────────────────
 $ApkUrl = "https://github.com/$GithubOwner/$GithubRepo/releases/download/v$Version/$ApkName"
@@ -35,7 +36,7 @@ $Json = [ordered]@{
     force_update   = $false
 } | ConvertTo-Json
 
-Set-Content $VersionJson $Json -NoNewline -Encoding UTF8
+[System.IO.File]::WriteAllText((Resolve-Path $VersionJson), $Json, $Utf8NoBom)
 Write-Host "version.json: version_code=$NewCode  version_name=$Version"
 Write-Host "             apk_url=$ApkUrl"
 
