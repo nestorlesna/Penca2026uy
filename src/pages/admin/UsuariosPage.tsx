@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, ShieldCheck, ShieldOff, UserCheck, UserX, Search, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import { RequireAdmin } from '../../components/auth/AuthGuard'
-import { fetchAllProfiles, setUserActive, setUserAdmin, setUserLoader } from '../../services/profileService'
+import { fetchAllProfiles, fetchAdminUserDetails, setUserActive, setUserAdmin, setUserLoader } from '../../services/profileService'
+import type { AdminUserDetail } from '../../services/profileService'
 import { useAuth } from '../../hooks/useAuth'
 import type { Profile } from '../../types'
 
@@ -24,6 +25,15 @@ function UsuariosContent() {
     queryKey: ['admin_profiles'],
     queryFn: fetchAllProfiles,
   })
+
+  const { data: userDetails } = useQuery({
+    queryKey: ['admin_user_details'],
+    queryFn: fetchAdminUserDetails,
+  })
+
+  const detailsMap = new Map<string, AdminUserDetail>(
+    (userDetails ?? []).map(d => [d.id, d])
+  )
 
   const mutateActive = useMutation({
     mutationFn: ({ id, val }: { id: string; val: boolean }) => setUserActive(id, val),
@@ -92,6 +102,7 @@ function UsuariosContent() {
             <UserRow
               key={profile.id}
               profile={profile}
+              detail={detailsMap.get(profile.id)}
               isMe={profile.id === me?.id}
               onToggleActive={(val) => {
                 mutateActive.mutate({ id: profile.id, val })
@@ -115,14 +126,16 @@ function UsuariosContent() {
 
 interface UserRowProps {
   profile: Profile
+  detail?: AdminUserDetail
   isMe: boolean
   onToggleActive: (val: boolean) => void
   onToggleAdmin: (val: boolean) => void
   onToggleLoader: (val: boolean) => void
 }
 
-function UserRow({ profile, isMe, onToggleActive, onToggleAdmin, onToggleLoader }: UserRowProps) {
+function UserRow({ profile, detail, isMe, onToggleActive, onToggleAdmin, onToggleLoader }: UserRowProps) {
   const initials = (profile.display_name || profile.username)[0].toUpperCase()
+  const noPredictions = detail !== undefined && detail.predictions_count === 0
 
   return (
     <div className="card p-4 flex items-center gap-3">
@@ -144,6 +157,15 @@ function UserRow({ profile, isMe, onToggleActive, onToggleAdmin, onToggleLoader 
           {profile.is_loader && !profile.is_admin && <span className="badge bg-primary/20 text-primary text-[10px]">Cargador</span>}
         </div>
         <p className="text-xs text-text-muted">@{profile.username}</p>
+        {detail && (
+          <p className="text-xs text-text-muted truncate">{detail.email}</p>
+        )}
+        {detail !== undefined && (
+          <p className={`text-xs font-medium mt-0.5 ${noPredictions ? 'text-error' : 'text-text-muted'}`}>
+            {detail.predictions_count} apuesta{detail.predictions_count !== 1 ? 's' : ''}
+            {noPredictions && ' — sin apuestas'}
+          </p>
+        )}
       </div>
 
       {/* Estado */}
