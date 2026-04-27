@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Smartphone } from 'lucide-react'
-import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
 
 export function AuthCallbackPage() {
@@ -13,15 +12,15 @@ export function AuthCallbackPage() {
     const searchParams = new URLSearchParams(window.location.search)
     const c = searchParams.get('code')
 
-    if (!Capacitor.isNativePlatform()) {
+    const fromApk = searchParams.get('from') === 'apk'
+
+    if (!fromApk) {
+      // Flujo web puro: intercambiar código PKCE o leer sesión ya establecida
       async function resolveWebSession() {
         if (c) {
-          // PKCE flow: intercambiar código manualmente
           const { error } = await supabase.auth.exchangeCodeForSession(c)
           if (!error) { navigate('/fixture', { replace: true }); return }
         }
-        // Implicit flow o fallback: detectSessionInUrl pudo haber procesado el hash
-        // automáticamente; verificar si la sesión ya existe
         const { data: { session } } = await supabase.auth.getSession()
         navigate(session ? '/fixture' : '/auth', { replace: true })
       }
@@ -29,6 +28,7 @@ export function AuthCallbackPage() {
       return
     }
 
+    // Flujo APK: Chrome en Android recibió el callback, hay que volver a la app
     if (!c) {
       navigate('/auth', { replace: true })
       return

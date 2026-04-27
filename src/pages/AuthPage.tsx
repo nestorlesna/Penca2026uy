@@ -169,7 +169,7 @@ export function AuthPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://penca2026uy.vercel.app/auth-callback',
+          redirectTo: 'https://penca2026uy.vercel.app/auth-callback?from=apk',
           skipBrowserRedirect: true,
         },
       })
