@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Smartphone } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
 
 export function AuthCallbackPage() {
@@ -14,6 +15,13 @@ export function AuthCallbackPage() {
 
     if (!c) {
       navigate('/auth', { replace: true })
+      return
+    }
+
+    if (!Capacitor.isNativePlatform()) {
+      supabase.auth.exchangeCodeForSession(c).then(({ error }) => {
+        navigate(error ? '/auth' : '/fixture', { replace: true })
+      })
       return
     }
 
