@@ -13,19 +13,24 @@ export function AuthCallbackPage() {
     const searchParams = new URLSearchParams(window.location.search)
     const c = searchParams.get('code')
 
-    if (!c) {
-      navigate('/auth', { replace: true })
+    if (!Capacitor.isNativePlatform()) {
+      async function resolveWebSession() {
+        if (c) {
+          // PKCE flow: intercambiar código manualmente
+          const { error } = await supabase.auth.exchangeCodeForSession(c)
+          if (!error) { navigate('/fixture', { replace: true }); return }
+        }
+        // Implicit flow o fallback: detectSessionInUrl pudo haber procesado el hash
+        // automáticamente; verificar si la sesión ya existe
+        const { data: { session } } = await supabase.auth.getSession()
+        navigate(session ? '/fixture' : '/auth', { replace: true })
+      }
+      resolveWebSession()
       return
     }
 
-    if (!Capacitor.isNativePlatform()) {
-      supabase.auth.exchangeCodeForSession(c).then(async ({ error }) => {
-        if (!error) { navigate('/fixture', { replace: true }); return }
-        // El SDK puede haber consumido el código automáticamente (detectSessionInUrl).
-        // Verificar si la sesión ya fue establecida antes de redirigir a /auth.
-        const { data: { session } } = await supabase.auth.getSession()
-        navigate(session ? '/fixture' : '/auth', { replace: true })
-      })
+    if (!c) {
+      navigate('/auth', { replace: true })
       return
     }
 
