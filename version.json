@@ -1,7 +1,7 @@
 {
-    "version_code":  25,
-    "version_name":  "1.0.25",
-    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.25/Penca2026uy.apk",
-    "release_notes":  "\n  ## 🚀 PencaLes 2026 - ¡Lanzamiento Oficial!.",
+    "version_code":  26,
+    "version_name":  "1.0.26",
+    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.26/Penca2026uy.apk",
+    "release_notes":  "Mejora en la descarga de actualizaciones",
     "force_update":  false
 }
