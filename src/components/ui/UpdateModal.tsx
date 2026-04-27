@@ -13,7 +13,6 @@ interface Props {
 
 export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, onDismiss }: Props) {
   const [progress, setProgress] = useState<number | null>(null)
-  const [error, setError] = useState(false)
 
   async function handleDownload() {
     if (!Capacitor.isNativePlatform()) {
@@ -21,7 +20,6 @@ export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, on
       return
     }
 
-    setError(false)
     setProgress(0)
 
     let progressListener: { remove: () => Promise<void> } | null = null
@@ -47,7 +45,8 @@ export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, on
         mimeType: 'application/vnd.android.package-archive',
       })
     } catch {
-      setError(true)
+      // FileOpener falla sin REQUEST_INSTALL_PACKAGES — abrir browser como fallback
+      window.open(apkUrl, '_system')
       setProgress(null)
     } finally {
       await progressListener?.remove()
@@ -78,10 +77,6 @@ export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, on
             </div>
             <p className="text-text-muted text-xs text-right">{progress}%</p>
           </div>
-        )}
-
-        {error && (
-          <p className="text-red-400 text-sm">Error al descargar. Intentá de nuevo.</p>
         )}
 
         <button
