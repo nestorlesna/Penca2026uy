@@ -19,8 +19,12 @@ export function AuthCallbackPage() {
     }
 
     if (!Capacitor.isNativePlatform()) {
-      supabase.auth.exchangeCodeForSession(c).then(({ error }) => {
-        navigate(error ? '/auth' : '/fixture', { replace: true })
+      supabase.auth.exchangeCodeForSession(c).then(async ({ error }) => {
+        if (!error) { navigate('/fixture', { replace: true }); return }
+        // El SDK puede haber consumido el código automáticamente (detectSessionInUrl).
+        // Verificar si la sesión ya fue establecida antes de redirigir a /auth.
+        const { data: { session } } = await supabase.auth.getSession()
+        navigate(session ? '/fixture' : '/auth', { replace: true })
       })
       return
     }
