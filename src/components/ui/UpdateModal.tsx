@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { Filesystem, Directory } from '@capacitor/filesystem'
-import { FileOpener } from '@capawesome-team/capacitor-file-opener'
+import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
 
 interface Props {
@@ -12,48 +10,14 @@ interface Props {
 }
 
 export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, onDismiss }: Props) {
-  const [progress, setProgress] = useState<number | null>(null)
 
   async function handleDownload() {
-    if (!Capacitor.isNativePlatform()) {
+    if (Capacitor.isNativePlatform()) {
+      await Browser.open({ url: apkUrl })
+    } else {
       window.open(apkUrl, '_blank')
-      return
-    }
-
-    setProgress(0)
-
-    let progressListener: { remove: () => Promise<void> } | null = null
-
-    try {
-      progressListener = await Filesystem.addListener('progress', (event) => {
-        if (event.contentLength > 0) {
-          setProgress(Math.round((event.bytes / event.contentLength) * 100))
-        }
-      })
-
-      const { path } = await Filesystem.downloadFile({
-        url: apkUrl,
-        path: `update_${versionName}.apk`,
-        directory: Directory.Cache,
-        progress: true,
-      })
-
-      setProgress(100)
-
-      await FileOpener.openFile({
-        path,
-        mimeType: 'application/vnd.android.package-archive',
-      })
-    } catch {
-      // FileOpener falla sin REQUEST_INSTALL_PACKAGES — abrir browser como fallback
-      window.open(apkUrl, '_system')
-      setProgress(null)
-    } finally {
-      await progressListener?.remove()
     }
   }
-
-  const downloading = progress !== null && progress < 100
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-10">
@@ -67,27 +31,18 @@ export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, on
           <p className="text-text-secondary text-sm">{releaseNotes}</p>
         )}
 
-        {downloading && (
-          <div className="space-y-1">
-            <div className="w-full bg-border rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all duration-200"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-text-muted text-xs text-right">{progress}%</p>
-          </div>
-        )}
+        <p className="text-text-muted text-xs">
+          Se abrirá el navegador para descargar e instalar la actualización.
+        </p>
 
         <button
-          className="btn-primary w-full disabled:opacity-50"
+          className="btn-primary w-full"
           onClick={handleDownload}
-          disabled={downloading}
         >
-          {downloading ? 'Descargando...' : 'Descargar actualización'}
+          Descargar actualización
         </button>
 
-        {!forceUpdate && !downloading && (
+        {!forceUpdate && (
           <button
             className="w-full text-center text-text-muted text-sm py-1 hover:text-text-secondary transition-colors"
             onClick={onDismiss}
@@ -99,4 +54,3 @@ export function UpdateModal({ versionName, apkUrl, releaseNotes, forceUpdate, on
     </div>
   )
 }
-
