@@ -1,7 +1,7 @@
 {
-    "version_code":  37,
-    "version_name":  "1.0.35",
-    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.35/Penca2026uy.apk",
-    "release_notes":  "Descraga apk desde navegador",
+    "version_code":  38,
+    "version_name":  "1.0.36",
+    "apk_url":  "https://github.com/nestorlesna/Penca2026uy/releases/download/v1.0.36/Penca2026uy.apk",
+    "release_notes":  "Descraga apk desde android con nuevo permiso",
     "force_update":  false
 }
