@@ -21,6 +21,7 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/ios": "^8.3.0",
     "@capawesome-team/capacitor-file-opener": "^8.0.1",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@marsidev/react-turnstile": "^1.5.0",
     "@supabase/supabase-js": "^2.100.1",
     "@tanstack/react-query": "^5.95.2",

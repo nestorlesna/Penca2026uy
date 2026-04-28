@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { Trophy, Loader2, Eye, EyeOff, Clock } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { Captcha } from '../components/ui/Captcha'
@@ -162,19 +163,25 @@ export function AuthPage() {
     setLoading(true)
 
     if (Capacitor.isNativePlatform()) {
-      // En la APK: redirigir a /auth-callback en Vercel (URL HTTPS que Supabase acepta).
-      // Esa página luego redirige a com.pencales.app://, que Android intercepta
-      // y devuelve el control a la APK vía appUrlOpen (OAuthCallbackHandler en App.tsx).
-      // skipBrowserRedirect evita que supabase-js toque el WebView de la APK.
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://penca2026uy.vercel.app/auth-callback?from=apk',
-          skipBrowserRedirect: true,
-        },
-      })
-      if (error) { setError(traducirError(error.message)); setLoading(false); return }
-      if (data.url) window.open(data.url, '_system')
+      try {
+        await GoogleAuth.initialize({
+          clientId: '917674823527-hh4as8jg5mi9gdltjnqgjh4a7fuc07ri.apps.googleusercontent.com',
+          scopes: ['profile', 'email'],
+          grantOfflineAccess: true,
+        })
+        const googleUser = await GoogleAuth.signIn()
+        const idToken = googleUser.authentication.idToken
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        })
+        if (error) setError(traducirError(error.message))
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (!msg.includes('cancel') && !msg.includes('Cancel') && !msg.includes('12501')) {
+          setError('No se pudo iniciar sesión con Google.')
+        }
+      }
     } else {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

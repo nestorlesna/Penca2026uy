@@ -14,6 +14,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#0B0F1A',
       showSpinner: false,
     },
+    GoogleAuth: {
+      scopes: ['profile', 'email'],
+      serverClientId: '917674823527-hh4as8jg5mi9gdltjnqgjh4a7fuc07ri.apps.googleusercontent.com',
+      forceCodeForRefreshToken: true,
+    },
   },
 };
 
