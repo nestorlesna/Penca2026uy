@@ -1,10 +1,11 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { Download, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import versionData from '../../version.json'
+
+const APK_URL = 'https://github.com/nestorlesna/Penca2026uy/releases/download/v1.1.0/Penca2026uy.apk'
 
 export function DescargarAppPage() {
-  const apkUrl = versionData.apk_url
+  const apkUrl = APK_URL
 
   return (
     <div className="max-w-md mx-auto">
@@ -38,7 +39,7 @@ export function DescargarAppPage() {
         </a>
 
         <p className="text-xs text-text-muted mt-4">
-          Versión {versionData.version_name}
+          Versión 1.1.0
         </p>
       </div>
     </div>
