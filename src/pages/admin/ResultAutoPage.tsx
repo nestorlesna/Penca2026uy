@@ -261,6 +261,434 @@ function CompetitionInfoCard({ data }: { data: WCCompetition }) {
   )
 }
 
+// ── Matches List Card (football-data.org) ─────────────────────────────────────
+
+interface WCTeam {
+  id: number | null; name: string | null; shortName: string | null
+  tla: string | null; crest: string | null
+}
+interface WCMatch {
+  id: number; utcDate: string; status: string
+  matchday: number | null; stage: string; group: string | null
+  homeTeam: WCTeam; awayTeam: WCTeam
+  score: { winner: string | null; fullTime: { home: number | null; away: number | null } }
+}
+interface WCMatchesData {
+  filters: { season: string; status: string[] }
+  resultSet: { count: number; first: string; last: string; played: number }
+  competition: { id: number; name: string; code: string; emblem: string }
+  matches: WCMatch[]
+}
+
+function isWCMatchesData(data: unknown): data is WCMatchesData {
+  return (
+    typeof data === 'object' && data !== null &&
+    'matches' in data && 'resultSet' in data &&
+    Array.isArray((data as WCMatchesData).matches)
+  )
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  GROUP_STAGE:    'Grupos',
+  LAST_32:        'R32',
+  LAST_16:        'Octavos',
+  QUARTER_FINALS: 'Cuartos',
+  SEMI_FINALS:    'Semis',
+  THIRD_PLACE:    '3.er puesto',
+  FINAL:          'Final',
+}
+const STAGE_ORDER = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','THIRD_PLACE','FINAL']
+
+function MatchRow({ match }: { match: WCMatch }) {
+  const dt = new Date(match.utcDate)
+  const dateStr = dt.toLocaleDateString('es', { day: 'numeric', month: 'short' })
+  const timeStr = dt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+
+  const home = match.homeTeam
+  const away = match.awayTeam
+  const ft = match.score.fullTime
+  const hasScore = ft.home !== null && ft.away !== null
+
+  return (
+    <div className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-surface transition-colors">
+      {/* Fecha/hora */}
+      <div className="text-right flex-shrink-0 w-16">
+        <p className="text-[10px] text-text-muted leading-tight">{dateStr}</p>
+        <p className="text-[10px] text-text-secondary leading-tight font-medium">{timeStr}</p>
+      </div>
+
+      {/* Local */}
+      <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
+        <span className="text-xs text-text-primary truncate text-right">{home.shortName ?? home.name ?? 'Por definir'}</span>
+        {home.crest
+          ? <img src={home.crest} alt={home.tla ?? ''} className="w-5 h-5 object-contain flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          : <span className="w-5 h-5 rounded bg-border flex-shrink-0" />
+        }
+      </div>
+
+      {/* Marcador */}
+      <div className="flex-shrink-0 w-14 text-center">
+        {hasScore
+          ? <span className="text-sm font-bold text-text-primary">{ft.home} – {ft.away}</span>
+          : <span className="text-xs text-text-muted">vs</span>
+        }
+      </div>
+
+      {/* Visitante */}
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {away.crest
+          ? <img src={away.crest} alt={away.tla ?? ''} className="w-5 h-5 object-contain flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          : <span className="w-5 h-5 rounded bg-border flex-shrink-0" />
+        }
+        <span className="text-xs text-text-primary truncate">{away.shortName ?? away.name ?? 'Por definir'}</span>
+      </div>
+    </div>
+  )
+}
+
+function MatchesListCard({ data }: { data: WCMatchesData }) {
+  const stages = STAGE_ORDER.filter(s => data.matches.some(m => m.stage === s))
+  const [activeStage, setActiveStage] = useState(stages[0] ?? 'GROUP_STAGE')
+
+  const stageMatches = data.matches
+    .filter(m => m.stage === activeStage)
+    .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime())
+
+  // Agrupar por grupo (fase de grupos) o por fecha (knockout)
+  type GroupedMatches = { label: string; matches: WCMatch[] }[]
+  let grouped: GroupedMatches = []
+
+  if (activeStage === 'GROUP_STAGE') {
+    const byGroup: Record<string, WCMatch[]> = {}
+    for (const m of stageMatches) {
+      const g = m.group ?? 'SIN_GRUPO'
+      if (!byGroup[g]) byGroup[g] = []
+      byGroup[g].push(m)
+    }
+    grouped = Object.entries(byGroup)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([g, ms]) => ({ label: g.replace('GROUP_', 'Grupo '), matches: ms }))
+  } else {
+    // Agrupar por fecha
+    const byDate: Record<string, WCMatch[]> = {}
+    for (const m of stageMatches) {
+      const d = new Date(m.utcDate).toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })
+      if (!byDate[d]) byDate[d] = []
+      byDate[d].push(m)
+    }
+    grouped = Object.entries(byDate).map(([d, ms]) => ({ label: d, matches: ms }))
+  }
+
+  const fmt = (d: string) => new Date(d).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  return (
+    <div className="space-y-3 mb-4">
+
+      {/* Resumen */}
+      <div className="bg-background border border-border rounded-xl p-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <img src={data.competition.emblem} alt={data.competition.name} className="w-8 h-8 object-contain" />
+            <span className="text-sm font-semibold text-text-primary">{data.competition.name}</span>
+          </div>
+          <div className="flex gap-4 ml-auto flex-wrap">
+            <div className="text-center">
+              <p className="text-lg font-bold text-text-primary">{data.resultSet.count}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Total</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-primary">{data.resultSet.played}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Jugados</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-accent">{data.resultSet.count - data.resultSet.played}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Pendientes</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium text-text-secondary">{fmt(data.resultSet.first)}</p>
+              <p className="text-xs font-medium text-text-secondary">{fmt(data.resultSet.last)}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Período</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs de etapas */}
+      <div className="flex flex-wrap gap-1.5">
+        {stages.map(s => {
+          const count = data.matches.filter(m => m.stage === s).length
+          return (
+            <button
+              key={s}
+              onClick={() => setActiveStage(s)}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                activeStage === s
+                  ? 'bg-primary/20 border-primary/50 text-primary font-semibold'
+                  : 'bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary'
+              }`}
+            >
+              {STAGE_LABELS[s] ?? s} <span className="opacity-60">({count})</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Lista de partidos */}
+      <div className="bg-background border border-border rounded-xl overflow-hidden">
+        {grouped.map(group => (
+          <div key={group.label}>
+            <div className="px-3 py-2 bg-surface border-b border-border">
+              <p className="text-[11px] text-text-muted uppercase tracking-wide font-semibold">{group.label}</p>
+            </div>
+            <div className="divide-y divide-border/50">
+              {group.matches.map(m => <MatchRow key={m.id} match={m} />)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  )
+}
+
+// ── Teams Grid Card (football-data.org) ──────────────────────────────────────
+
+interface WCTeamFull {
+  id: number; name: string; shortName: string; tla: string; crest: string
+  area: { id: number; name: string; code: string; flag: string | null }
+  address: string | null; website: string | null; founded: number | null
+  clubColors: string | null; venue: string | null; lastUpdated: string
+}
+interface WCTeamsData {
+  count: number
+  competition: { id: number; name: string; code: string; emblem: string }
+  season: { startDate: string; endDate: string }
+  teams: WCTeamFull[]
+}
+
+function isWCTeamsData(data: unknown): data is WCTeamsData {
+  return (
+    typeof data === 'object' && data !== null &&
+    'teams' in data && 'count' in data &&
+    Array.isArray((data as WCTeamsData).teams) &&
+    (data as WCTeamsData).teams.length > 0 &&
+    'tla' in (data as WCTeamsData).teams[0]
+  )
+}
+
+function ColorDots({ colors }: { colors: string }) {
+  const parts = colors.split('/').map(c => c.trim().toLowerCase())
+  const colorMap: Record<string, string> = {
+    red: '#ef4444', blue: '#3b82f6', 'navy blue': '#1e3a8a', white: '#f8fafc',
+    black: '#1e293b', yellow: '#eab308', green: '#22c55e', orange: '#f97316',
+    gold: '#f59e0b', 'sky blue': '#38bdf8', maroon: '#9f1239', purple: '#a855f7',
+    pink: '#ec4899', grey: '#6b7280', 'light blue': '#7dd3fc',
+  }
+  return (
+    <div className="flex gap-0.5 flex-wrap">
+      {parts.slice(0, 3).map((c, i) => (
+        <span
+          key={i}
+          className="w-3 h-3 rounded-full border border-white/20 flex-shrink-0"
+          style={{ backgroundColor: colorMap[c] ?? '#475569' }}
+          title={c}
+        />
+      ))}
+    </div>
+  )
+}
+
+function TeamsGridCard({ data }: { data: WCTeamsData }) {
+  const [search, setSearch] = useState('')
+  const filtered = data.teams
+    .filter(t =>
+      search === '' ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.tla.toLowerCase().includes(search.toLowerCase()) ||
+      t.area.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  return (
+    <div className="space-y-3 mb-4">
+
+      {/* Header */}
+      <div className="bg-background border border-border rounded-xl p-4 flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <img src={data.competition.emblem} alt={data.competition.name} className="w-8 h-8 object-contain" />
+          <span className="text-sm font-semibold text-text-primary">{data.competition.name}</span>
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-2xl font-bold text-text-primary">{data.count}</span>
+          <span className="text-text-muted text-sm">selecciones</span>
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar selección..."
+          className="w-full mt-2 bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60"
+        />
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {filtered.map(team => (
+          <div key={team.id} className="bg-background border border-border rounded-xl p-3 flex gap-3 items-start hover:border-border/80 transition-colors">
+            {/* Escudo */}
+            <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
+              {team.crest
+                ? <img src={team.crest} alt={team.tla} className="w-10 h-10 object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                : <span className="w-10 h-10 rounded bg-border" />
+              }
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary truncate leading-tight">{team.name}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{team.tla}</span>
+                {team.area.flag
+                  ? <img src={team.area.flag} alt={team.area.name} className="w-4 h-3 object-cover rounded-sm" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  : null
+                }
+                <span className="text-[10px] text-text-muted truncate">{team.area.name}</span>
+              </div>
+
+              <div className="mt-1.5 space-y-0.5">
+                {team.founded && (
+                  <p className="text-[10px] text-text-muted">Est. {team.founded}</p>
+                )}
+                {team.clubColors && (
+                  <div className="flex items-center gap-1">
+                    <ColorDots colors={team.clubColors} />
+                    <span className="text-[9px] text-text-muted truncate">{team.clubColors}</span>
+                  </div>
+                )}
+                {team.venue && (
+                  <p className="text-[10px] text-text-muted truncate" title={team.venue}>{team.venue}</p>
+                )}
+                {team.website && (
+                  <a
+                    href={team.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-primary/70 hover:text-primary truncate block"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {team.website.replace(/^https?:\/\/(www\.)?/, '')}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="text-text-muted text-sm text-center py-4">Sin resultados para "{search}"</p>
+      )}
+    </div>
+  )
+}
+
+// ── Standings Card (football-data.org) ───────────────────────────────────────
+
+interface StandingRow {
+  position: number
+  team: { id: number; name: string; shortName: string; tla: string; crest: string }
+  playedGames: number; form: string | null
+  won: number; draw: number; lost: number; points: number
+  goalsFor: number; goalsAgainst: number; goalDifference: number
+}
+interface GroupStanding { stage: string; type: string; group: string; table: StandingRow[] }
+interface WCStandingsData {
+  competition: { id: number; name: string; code: string; emblem: string }
+  season: { startDate: string; endDate: string; currentMatchday: number | null }
+  standings: GroupStanding[]
+}
+
+function isWCStandingsData(data: unknown): data is WCStandingsData {
+  return (
+    typeof data === 'object' && data !== null &&
+    'standings' in data && Array.isArray((data as WCStandingsData).standings) &&
+    (data as WCStandingsData).standings.length > 0 &&
+    'table' in (data as WCStandingsData).standings[0]
+  )
+}
+
+function StandingsCard({ data }: { data: WCStandingsData }) {
+  const groups = data.standings.filter(s => s.type === 'TOTAL').sort((a, b) => a.group.localeCompare(b.group))
+
+  return (
+    <div className="space-y-3 mb-4">
+
+      {/* Header */}
+      <div className="bg-background border border-border rounded-xl p-4 flex items-center gap-3 flex-wrap">
+        <img src={data.competition.emblem} alt={data.competition.name} className="w-8 h-8 object-contain" />
+        <span className="text-sm font-semibold text-text-primary">{data.competition.name} — Posiciones</span>
+        <span className="ml-auto text-xs text-text-muted">{groups.length} grupos</span>
+        {data.season.currentMatchday && (
+          <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+            Jornada {data.season.currentMatchday}
+          </span>
+        )}
+      </div>
+
+      {/* Grid de grupos — 2 columnas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {groups.map(group => (
+          <div key={group.group} className="bg-background border border-border rounded-xl overflow-hidden">
+            <div className="px-3 py-2 bg-surface border-b border-border">
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">{group.group}</p>
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-text-muted border-b border-border/50">
+                  <th className="text-left px-3 py-1.5 font-medium w-6">#</th>
+                  <th className="text-left px-1 py-1.5 font-medium">Equipo</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-6" title="Jugados">PJ</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-6" title="Ganados">PG</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-6" title="Empates">PE</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-6" title="Perdidos">PP</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-6" title="Diferencia">DG</th>
+                  <th className="text-center px-1 py-1.5 font-medium w-7 text-accent" title="Puntos">Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.table.map((row, i) => (
+                  <tr key={row.team.id} className={`border-b border-border/30 last:border-0 ${i < 2 ? 'bg-primary/5' : ''}`}>
+                    <td className="px-3 py-1.5 text-text-muted">{row.position}</td>
+                    <td className="px-1 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        {row.team.crest
+                          ? <img src={row.team.crest} alt={row.team.tla} className="w-4 h-4 object-contain flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                          : <span className="w-4 h-4 rounded-sm bg-border flex-shrink-0" />
+                        }
+                        <span className="text-text-primary truncate max-w-[80px]">{row.team.shortName}</span>
+                      </div>
+                    </td>
+                    <td className="text-center px-1 py-1.5 text-text-muted">{row.playedGames}</td>
+                    <td className="text-center px-1 py-1.5 text-text-secondary">{row.won}</td>
+                    <td className="text-center px-1 py-1.5 text-text-secondary">{row.draw}</td>
+                    <td className="text-center px-1 py-1.5 text-text-secondary">{row.lost}</td>
+                    <td className={`text-center px-1 py-1.5 ${row.goalDifference > 0 ? 'text-primary' : row.goalDifference < 0 ? 'text-red-400' : 'text-text-muted'}`}>
+                      {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
+                    </td>
+                    <td className="text-center px-1 py-1.5 font-bold text-accent">{row.points}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[10px] text-text-muted px-1">Los 2 primeros de cada grupo clasifican a R32. El fondo verde indica zona de clasificación.</p>
+    </div>
+  )
+}
+
 // ── Sección genérica por API ──────────────────────────────────────────────────
 
 function ApiSection({
@@ -421,7 +849,13 @@ function ResultAutoContent() {
           { label: 'Posiciones grupos',     path: '/competitions/WC/standings' },
           { label: 'Próximos partidos',     path: '/matches', params: { competitions: 'WC', status: 'SCHEDULED' } },
         ]}
-        renderVisual={data => isWCCompetition(data) ? <CompetitionInfoCard data={data} /> : null}
+        renderVisual={data => {
+          if (isWCCompetition(data))  return <CompetitionInfoCard data={data} />
+          if (isWCMatchesData(data))  return <MatchesListCard data={data} />
+          if (isWCTeamsData(data))    return <TeamsGridCard data={data} />
+          if (isWCStandingsData(data)) return <StandingsCard data={data} />
+          return null
+        }}
       />
 
       {/* API 2 — api-football.com */}
