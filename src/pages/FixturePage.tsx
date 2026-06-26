@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import { MatchCard } from '../components/matches/MatchCard'
 import { StadiumModal } from '../components/ui/StadiumModal'
@@ -95,6 +95,20 @@ export function FixturePage() {
     }))
   }, [matches])
 
+  const todayKey = matchDateKey(new Date().toISOString())
+
+  // Posicionar la pantalla en la sección del día actual al ingresar
+  const todayRef = useRef<HTMLElement | null>(null)
+  const scrolledRef = useRef(false)
+  useEffect(() => {
+    if (scrolledRef.current) return
+    if (isLoading) return
+    if (groupedByDate.some(g => g.dateKey === todayKey) && todayRef.current) {
+      todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      scrolledRef.current = true
+    }
+  }, [groupedByDate, isLoading, todayKey])
+
   const showGroupFilter = phaseOrder === 1 || phaseOrder === undefined
 
   return (
@@ -178,18 +192,30 @@ export function FixturePage() {
             </p>
           )}
 
-          {groupedByDate.map(({ dateKey, label, matches: dayMatches }) => (
-            <section key={dateKey}>
-              <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2 capitalize">
-                {label}
-              </h2>
-              <div className="space-y-3">
-                {dayMatches.map((match) => (
-                  <MatchCard key={match.id} match={match} onStadiumClick={handleStadiumClick} onPredictionsClick={handlePredictionsClick} />
-                ))}
-              </div>
-            </section>
-          ))}
+          {groupedByDate.map(({ dateKey, label, matches: dayMatches }) => {
+            const isToday = dateKey === todayKey
+            return (
+              <section
+                key={dateKey}
+                ref={isToday ? todayRef : undefined}
+                className="scroll-mt-4"
+              >
+                <h2 className={`text-xs font-semibold uppercase tracking-widest mb-2 capitalize ${
+                  isToday ? 'text-primary' : 'text-text-muted'
+                }`}>
+                  {label}
+                  {isToday && (
+                    <span className="ml-2 badge-primary text-[9px] normal-case tracking-normal">Hoy</span>
+                  )}
+                </h2>
+                <div className="space-y-3">
+                  {dayMatches.map((match) => (
+                    <MatchCard key={match.id} match={match} onStadiumClick={handleStadiumClick} onPredictionsClick={handlePredictionsClick} />
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
 
