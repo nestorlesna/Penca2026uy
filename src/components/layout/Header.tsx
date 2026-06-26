@@ -99,6 +99,7 @@ export function Header() {
                         <Link to="/admin/usuarios" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Usuarios</Link>
                         <Link to="/admin/resultados" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Resultados</Link>
                         <Link to="/admin/partidos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos</Link>
+                        <Link to="/admin/partidos2" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Partidos2</Link>
                         <Link to="/admin/equipos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Equipos</Link>
                         <Link to="/admin/terceros" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Terceros</Link>
                         <Link to="/admin/posiciones-grupos" className="block px-4 py-1.5 text-sm text-accent hover:bg-surface-2 transition-colors">Posiciones grupos</Link>

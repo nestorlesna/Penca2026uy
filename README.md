@@ -568,13 +568,14 @@ Backup completo de la base PostgreSQL de Supabase con `pg_dump`. Ejecutar en Pow
 
 ```powershell
 $env:PGPASSWORD = '<password-de-la-base>'
+cd 'C:\Program Files\PostgreSQL\17\bin\'
 .\pg_dump.exe `
   --host=aws-1-us-east-2.pooler.supabase.com `
   --port=5432 `
   --username=postgres.twdruhhhnsbrpyzlfxmg `
   --dbname=postgres `
   --no-owner --no-privileges `
-  -f backup.sql
+  -f /datos/backup.sql
 ```
 
 > **Importante:** nunca dejar la contraseña real en el README ni en el código. Obtenerla desde Supabase → Project Settings → Database. El archivo `.sql` resultante contiene datos de usuarios — no commitearlo al repo.
