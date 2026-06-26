@@ -10,7 +10,7 @@ import { fetchAllTeams } from '../../services/teamService'
 import { supabase } from '../../lib/supabase'
 import type { MatchWithRelations } from '../../types/match'
 import type { TeamWithGroup } from '../../services/teamService'
-import { formatMatchDay, formatMatchTime } from '../../utils/datetime'
+import { formatMatchDay, formatMatchTime, formatMatchDayFull, matchDateKey } from '../../utils/datetime'
 
 interface MatchEditInput {
   match_datetime: string   // ISO local datetime-local input value
@@ -261,6 +261,21 @@ export function PartidosAdminPage() {
     )
   }, [matches, search])
 
+  // Agrupa los partidos por día (zona local) preservando el orden cronológico
+  const groupedByDay = useMemo(() => {
+    const groups: { key: string; label: string; matches: MatchWithRelations[] }[] = []
+    for (const m of filtered) {
+      const key = matchDateKey(m.match_datetime)
+      const last = groups[groups.length - 1]
+      if (last && last.key === key) {
+        last.matches.push(m)
+      } else {
+        groups.push({ key, label: formatMatchDayFull(m.match_datetime), matches: [m] })
+      }
+    }
+    return groups
+  }, [filtered])
+
   return (
     <RequireAdmin>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
@@ -301,47 +316,61 @@ export function PartidosAdminPage() {
           </div>
         )}
 
-        {/* Lista */}
-        <div className="space-y-2">
-          {filtered.map(match => (
-            <button
-              key={match.id}
-              onClick={() => setSelected(match)}
-              className="card w-full p-3 hover:border-primary/40 transition-colors text-left"
-            >
-              {/* Línea superior: fase/grupo + número + fecha + hora + estadio */}
-              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
-                {match.group
-                  ? <span className="badge-primary text-[10px] font-semibold uppercase tracking-wide">Grupo {match.group.name}</span>
-                  : <span className="badge bg-accent/20 text-accent text-[10px] font-semibold uppercase tracking-wide">{match.phase.name}</span>
-                }
-                <span className="text-text-muted text-[11px]">#{match.match_number}</span>
-                <span className="text-text-muted text-[11px]">·</span>
-                <span className="text-text-secondary text-[11px]">{formatMatchDay(match.match_datetime)}</span>
-                <span className="text-text-muted text-[11px]">·</span>
-                <span className="text-text-secondary text-[11px] font-medium">{formatMatchTime(match.match_datetime)}</span>
-                {match.stadium && (
-                  <>
-                    <span className="text-text-muted text-[11px]">·</span>
-                    <span className="text-text-muted text-[11px] truncate">{match.stadium.city}</span>
-                  </>
-                )}
-                {match.status === 'finished' && (
-                  <span className="ml-auto badge bg-success/20 text-success text-[10px]">Final</span>
-                )}
+        {/* Lista agrupada por día */}
+        <div className="space-y-6">
+          {groupedByDay.map(day => (
+            <section key={day.key} className="space-y-2">
+              {/* Cabecera de día */}
+              <div className="sticky top-0 z-10 -mx-4 px-4 py-1.5 bg-background/95 backdrop-blur-sm border-b border-border flex items-center gap-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary first-letter:uppercase">
+                  {day.label}
+                </h2>
+                <span className="text-[11px] text-text-muted">
+                  {day.matches.length} {day.matches.length === 1 ? 'partido' : 'partidos'}
+                </span>
               </div>
 
-              {/* Equipos */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
-                </div>
-                <span className="text-text-muted text-base font-light flex-shrink-0">vs</span>
-                <div className="flex-1 min-w-0 flex justify-end">
-                  <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
-                </div>
-              </div>
-            </button>
+              {day.matches.map(match => (
+                <button
+                  key={match.id}
+                  onClick={() => setSelected(match)}
+                  className="card w-full p-3 hover:border-primary/40 transition-colors text-left"
+                >
+                  {/* Línea superior: fase/grupo + número + fecha + hora + estadio */}
+                  <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+                    {match.group
+                      ? <span className="badge-primary text-[10px] font-semibold uppercase tracking-wide">Grupo {match.group.name}</span>
+                      : <span className="badge bg-accent/20 text-accent text-[10px] font-semibold uppercase tracking-wide">{match.phase.name}</span>
+                    }
+                    <span className="text-text-muted text-[11px]">#{match.match_number}</span>
+                    <span className="text-text-muted text-[11px]">·</span>
+                    <span className="text-text-secondary text-[11px]">{formatMatchDay(match.match_datetime)}</span>
+                    <span className="text-text-muted text-[11px]">·</span>
+                    <span className="text-text-secondary text-[11px] font-medium">{formatMatchTime(match.match_datetime)}</span>
+                    {match.stadium && (
+                      <>
+                        <span className="text-text-muted text-[11px]">·</span>
+                        <span className="text-text-muted text-[11px] truncate">{match.stadium.city}</span>
+                      </>
+                    )}
+                    {match.status === 'finished' && (
+                      <span className="ml-auto badge bg-success/20 text-success text-[10px]">Final</span>
+                    )}
+                  </div>
+
+                  {/* Equipos */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" />
+                    </div>
+                    <span className="text-text-muted text-base font-light flex-shrink-0">vs</span>
+                    <div className="flex-1 min-w-0 flex justify-end">
+                      <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </section>
           ))}
 
           {!isLoading && filtered.length === 0 && (
