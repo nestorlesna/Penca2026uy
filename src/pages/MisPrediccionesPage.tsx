@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Loader2, Star, Lock } from 'lucide-react'
 import { RequireAuth, RequireActive } from '../components/auth/AuthGuard'
 import { PredictionModal } from '../components/predictions/PredictionModal'
 import { TeamFlag } from '../components/ui/TeamFlag'
 import { useMatches } from '../hooks/useMatches'
 import { useMyPredictionsMap, useMyPredictions } from '../hooks/usePredictions'
-import { formatMatchDay, formatMatchTime } from '../utils/datetime'
+import { formatMatchTime, matchDateKey, formatMatchDayFull } from '../utils/datetime'
 import { GROUPS } from '../utils/constants'
 import type { MatchWithRelations } from '../types/match'
 import type { PredictionWithMatch } from '../services/predictionService'
@@ -59,6 +59,35 @@ function PredecirTab() {
     () => matches.filter(m => m.home_score_90 === null),
     [matches]
   )
+
+  // Agrupar partidos próximos por fecha local
+  const groupedByDate = useMemo(() => {
+    const map = new Map<string, typeof upcoming>()
+    for (const m of upcoming) {
+      const key = matchDateKey(m.match_datetime)
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(m)
+    }
+    return Array.from(map.entries()).map(([dateKey, items]) => ({
+      dateKey,
+      label: formatMatchDayFull(items[0].match_datetime),
+      matches: items,
+    }))
+  }, [upcoming])
+
+  const todayKey = matchDateKey(new Date().toISOString())
+
+  // Posicionar la pantalla en la sección del día actual al ingresar
+  const todayRef = useRef<HTMLElement | null>(null)
+  const scrolledRef = useRef(false)
+  useEffect(() => {
+    if (scrolledRef.current) return
+    if (isLoading || loadingPreds) return
+    if (groupedByDate.some(g => g.dateKey === todayKey) && todayRef.current) {
+      todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      scrolledRef.current = true
+    }
+  }, [groupedByDate, isLoading, loadingPreds, todayKey])
 
   const showGroupFilter = phaseOrder === 1 || phaseOrder === undefined
 
@@ -130,72 +159,95 @@ function PredecirTab() {
         </p>
       )}
 
-      <div className="space-y-2">
-        {!isLoading && !loadingPreds && upcoming.map(match => {
-          const pred = predsMap.get(match.id) ?? null
-          const isStarted = new Date(match.match_datetime) <= new Date()
-          return (
-            <div
-              key={match.id}
-              className={`card p-3 flex items-center gap-3 transition-colors ${
-                isStarted
-                  ? 'opacity-60 cursor-default'
-                  : 'cursor-pointer hover:border-primary/40'
-              }`}
-              onClick={() => !isStarted && setSelected(match)}
-            >
-              {/* Phase badge + number */}
-              <div className="flex-shrink-0 w-10 text-center">
-                <p className="text-[11px] text-text-muted">#{match.match_number}</p>
-                {match.group ? (
-                  <span className="badge-primary text-[9px]">G{match.group.name}</span>
-                ) : (
-                  <span className="badge bg-accent/20 text-accent text-[9px]">
-                    {match.phase.name.substring(0, 3)}
-                  </span>
-                )}
-              </div>
+      {!isLoading && !loadingPreds && (
+        <div className="space-y-6">
+          {groupedByDate.map(({ dateKey, label, matches: dayMatches }) => {
+            const isToday = dateKey === todayKey
+            return (
+              <section
+                key={dateKey}
+                ref={isToday ? todayRef : undefined}
+                className="scroll-mt-4"
+              >
+                <h2 className={`text-xs font-semibold uppercase tracking-widest mb-2 capitalize ${
+                  isToday ? 'text-primary' : 'text-text-muted'
+                }`}>
+                  {label}
+                  {isToday && (
+                    <span className="ml-2 badge-primary text-[9px] normal-case tracking-normal">Hoy</span>
+                  )}
+                </h2>
+                <div className="space-y-2">
+                  {dayMatches.map(match => {
+                    const pred = predsMap.get(match.id) ?? null
+                    const isStarted = new Date(match.match_datetime) <= new Date()
+                    return (
+                      <div
+                        key={match.id}
+                        className={`card p-3 flex items-center gap-3 transition-colors ${
+                          isStarted
+                            ? 'opacity-60 cursor-default'
+                            : 'cursor-pointer hover:border-primary/40'
+                        }`}
+                        onClick={() => !isStarted && setSelected(match)}
+                      >
+                        {/* Phase badge + number */}
+                        <div className="flex-shrink-0 w-10 text-center">
+                          <p className="text-[11px] text-text-muted">#{match.match_number}</p>
+                          {match.group ? (
+                            <span className="badge-primary text-[9px]">G{match.group.name}</span>
+                          ) : (
+                            <span className="badge bg-accent/20 text-accent text-[9px]">
+                              {match.phase.name.substring(0, 3)}
+                            </span>
+                          )}
+                        </div>
 
-              {/* Teams */}
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" abbrev />
-                  </div>
-                  <span className="text-text-muted text-xs">vs</span>
-                  <div className="flex-1 min-w-0 flex justify-end">
-                    <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" abbrev />
-                  </div>
+                        {/* Teams */}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                              <TeamFlag team={match.home_team} slotLabel={match.home_slot_label} size="sm" align="left" abbrev />
+                            </div>
+                            <span className="text-text-muted text-xs">vs</span>
+                            <div className="flex-1 min-w-0 flex justify-end">
+                              <TeamFlag team={match.away_team} slotLabel={match.away_slot_label} size="sm" align="right" abbrev />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-text-muted">
+                            {formatMatchTime(match.match_datetime)}
+                          </p>
+                        </div>
+
+                        {/* Prediction status */}
+                        <div className="flex-shrink-0 text-right min-w-[60px]">
+                          {isStarted ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <Lock size={12} className="text-text-muted" />
+                              {pred ? (
+                                <ScoreBadge pred={pred} />
+                              ) : (
+                                <span className="text-[10px] text-text-muted italic">Sin pred.</span>
+                              )}
+                            </div>
+                          ) : pred ? (
+                            <div>
+                              <ScoreBadge pred={pred} />
+                              <p className="text-[10px] text-primary mt-0.5">✓ Guardada</p>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-text-muted italic">Sin pred.</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <p className="text-[11px] text-text-muted">
-                  {formatMatchDay(match.match_datetime)} · {formatMatchTime(match.match_datetime)}
-                </p>
-              </div>
-
-              {/* Prediction status */}
-              <div className="flex-shrink-0 text-right min-w-[60px]">
-                {isStarted ? (
-                  <div className="flex flex-col items-end gap-0.5">
-                    <Lock size={12} className="text-text-muted" />
-                    {pred ? (
-                      <ScoreBadge pred={pred} />
-                    ) : (
-                      <span className="text-[10px] text-text-muted italic">Sin pred.</span>
-                    )}
-                  </div>
-                ) : pred ? (
-                  <div>
-                    <ScoreBadge pred={pred} />
-                    <p className="text-[10px] text-primary mt-0.5">✓ Guardada</p>
-                  </div>
-                ) : (
-                  <span className="text-[11px] text-text-muted italic">Sin pred.</span>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+              </section>
+            )
+          })}
+        </div>
+      )}
 
       <PredictionModal
         match={selected}
