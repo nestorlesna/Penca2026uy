@@ -38,7 +38,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\DATOS\\\\DESARROLLOS\\\\React\\\\Penca2026uy\" -Recurse -Directory -Filter \"*admin*\")",
       "Bash(Select-Object FullName)",
       "Bash(git log *)",
-      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 20)"
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 20)",
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 40)"
     ]
   }
 }

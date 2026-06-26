@@ -18,6 +18,7 @@ import { EquipoPage } from './pages/EquipoPage'
 import { AyudaPage } from './pages/AyudaPage'
 import { EquiposAdminPage } from './pages/admin/EquiposAdminPage'
 import { PartidosAdminPage } from './pages/admin/PartidosAdminPage'
+import { Partidos2Page } from './pages/admin/Partidos2Page'
 import { AuditoriaPage } from './pages/admin/AuditoriaPage'
 import { TercerosPage } from './pages/admin/TercerosPage'
 import { PosicionesGruposPage } from './pages/admin/PosicionesGruposPage'
@@ -73,6 +74,7 @@ function AppContent() {
             <Route path="admin/equipos"     element={<EquiposAdminPage />} />
             <Route path="admin/auditoria"   element={<AuditoriaPage />} />
             <Route path="admin/partidos"    element={<PartidosAdminPage />} />
+            <Route path="admin/partidos2"   element={<Partidos2Page />} />
             <Route path="admin/terceros"    element={<TercerosPage />} />
             <Route path="admin/posiciones-grupos" element={<PosicionesGruposPage />} />
             <Route path="admin/combinaciones"     element={<CombinacionesPage />} />
