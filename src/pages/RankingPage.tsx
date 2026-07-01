@@ -1,4 +1,5 @@
-import { Loader2, Trophy, Target, Check } from 'lucide-react'
+import { Loader2, Trophy, Target, Check, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../hooks/useAuth'
 import type { LeaderboardEntry } from '../types'
@@ -35,13 +36,16 @@ function Avatar({ entry }: { entry: LeaderboardEntry }) {
 function LeaderboardRow({
   entry,
   isMe,
+  onClick,
 }: {
   entry: LeaderboardEntry
   isMe: boolean
+  onClick?: () => void
 }) {
   return (
     <div
-      className={`card p-3 flex items-center gap-3 transition-colors ${
+      onClick={onClick}
+      className={`card p-3 flex items-center gap-3 transition-colors cursor-pointer hover:border-primary/40 ${
         isMe ? 'border-primary/40 bg-primary/5' : ''
       }`}
     >
@@ -82,17 +86,30 @@ function LeaderboardRow({
         </p>
         <p className="text-[10px] text-text-muted mt-0.5">pts</p>
       </div>
+
+      <ChevronRight size={16} className="text-text-muted flex-shrink-0" />
     </div>
   )
 }
 
-function TopThree({ entries, myId }: { entries: LeaderboardEntry[]; myId?: string }) {
+function TopThree({
+  entries,
+  myId,
+  onSelect,
+}: {
+  entries: LeaderboardEntry[]
+  myId?: string
+  onSelect: (userId: string) => void
+}) {
   const [first, second, third] = entries
 
   function PodiumCard({ entry, height }: { entry: LeaderboardEntry; height: string }) {
     const isMe = entry.user_id === myId
     return (
-      <div className="flex flex-col items-center gap-2">
+      <div
+        onClick={() => onSelect(entry.user_id)}
+        className="flex flex-col items-center gap-2 cursor-pointer"
+      >
         <Avatar entry={entry} />
         <p className={`text-xs font-medium text-center truncate max-w-[80px] ${isMe ? 'text-primary' : 'text-text-primary'}`}>
           {entry.display_name}
@@ -135,6 +152,9 @@ function TopThree({ entries, myId }: { entries: LeaderboardEntry[]; myId?: strin
 export function RankingPage() {
   const { data: entries = [], isLoading, error } = useLeaderboard()
   const { user } = useAuth()
+  const navigate = useNavigate()
+
+  const goToUser = (userId: string) => navigate(`/ranking/${userId}`)
 
   const myId = user?.id
   const myEntry = entries.find(e => e.user_id === myId)
@@ -171,7 +191,7 @@ export function RankingPage() {
       {!isLoading && !error && entries.length > 0 && (
         <>
           {/* Podio top 3 */}
-          <TopThree entries={entries.slice(0, 3)} myId={myId} />
+          <TopThree entries={entries.slice(0, 3)} myId={myId} onSelect={goToUser} />
 
           {/* Mi posición fijada (si no estoy en top 3 y estoy logueado) */}
           {myEntry && myEntry.rank > 3 && (
@@ -179,7 +199,7 @@ export function RankingPage() {
               <p className="text-xs text-text-muted uppercase tracking-wide mb-1.5">
                 Tu posición
               </p>
-              <LeaderboardRow entry={myEntry} isMe />
+              <LeaderboardRow entry={myEntry} isMe onClick={() => goToUser(myEntry.user_id)} />
             </div>
           )}
 
@@ -194,6 +214,7 @@ export function RankingPage() {
                   key={entry.user_id}
                   entry={entry}
                   isMe={entry.user_id === myId}
+                  onClick={() => goToUser(entry.user_id)}
                 />
               ))}
             </div>
