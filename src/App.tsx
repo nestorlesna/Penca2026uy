@@ -6,6 +6,7 @@ import { Layout } from './components/layout/Layout'
 import { FixturePage } from './pages/FixturePage'
 import { GruposPage } from './pages/GruposPage'
 import { RankingPage } from './pages/RankingPage'
+import { RankingUsuarioPage } from './pages/RankingUsuarioPage'
 import { MisPrediccionesPage } from './pages/MisPrediccionesPage'
 import { PerfilPage } from './pages/PerfilPage'
 import { AuthPage } from './pages/AuthPage'
@@ -56,6 +57,7 @@ function AppContent() {
             <Route path="grupos/:grupo"     element={<GrupoDetailPage />} />
             <Route path="equipos/:id"       element={<EquipoPage />} />
             <Route path="ranking"           element={<RankingPage />} />
+            <Route path="ranking/:userId"   element={<RankingUsuarioPage />} />
             <Route path="mis-predicciones"  element={<MisPrediccionesPage />} />
             <Route path="perfil"            element={<PerfilPage />} />
             <Route path="descargar"         element={<DescargarAppPage />} />
