@@ -196,6 +196,7 @@ export const supabase = createClient(
 14_security_fixes.sql  # RLS hardening: block is_loader self-escalation + server-side bonus lock
 15_security_fixes_2.sql # profiles auth-only read, private subgrupos (member-only), explicit WITH CHECK
 16_rpc_authorization.sql # role guard on SECURITY DEFINER RPCs (admin/loader for result flow; admin-only for group preds). Authoritative final form of those 5 functions.
+17_rpc_revoke.sql        # defense-in-depth: REVOKE EXECUTE from anon/public on mutating RPCs (Capa 1, complements the internal guard in 16)
 ```
 
 Standalone (run after their dependencies): `08_email_queue.sql`, `08b_group_predictions_rpc.sql`, `08c_match_predictions_rpc.sql`.

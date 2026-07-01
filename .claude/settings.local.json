@@ -39,7 +39,12 @@
       "Bash(Select-Object FullName)",
       "Bash(git log *)",
       "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 20)",
-      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 40)"
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 40)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(git push *)",
+      "PowerShell(npx eslint src/pages/RankingUsuarioPage.tsx src/pages/RankingPage.tsx src/hooks/useUserDetail.ts src/App.tsx --ext ts,tsx 2>&1 | Select-Object -First 40)",
+      "PowerShell(git stash *)",
+      "PowerShell(git add *)"
     ]
   }
 }
