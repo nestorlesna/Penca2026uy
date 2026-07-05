@@ -102,6 +102,10 @@ export interface PredictionWithMatch {
 export interface PredictionSummary {
   home_score: number
   away_score: number
+  home_score_et: number | null
+  away_score_et: number | null
+  predicted_pk_winner_id: string | null
+  points_earned: number
   count: number
 }
 
@@ -111,22 +115,38 @@ export async function fetchMatchPredictionsSummary(matchId: string): Promise<{
 }> {
   const { data, error } = await supabase
     .from('predictions')
-    .select('home_score, away_score, user_id, profiles(display_name, avatar_url)')
+    .select('home_score, away_score, home_score_et, away_score_et, predicted_pk_winner_id, points_earned, user_id, profiles(display_name, avatar_url)')
     .eq('match_id', matchId)
   if (error) throw error
 
   const rows = data as Array<{
     home_score: number
     away_score: number
+    home_score_et: number | null
+    away_score_et: number | null
+    predicted_pk_winner_id: string | null
+    points_earned: number | null
     user_id: string
     profiles: { display_name: string; avatar_url: string | null }[] | null
   }>
 
-  const map = new Map<string, { home_score: number; away_score: number; count: number }>()
+  // Agrupar por el resultado completo: 90' + ET + ganador por penales.
+  // Para fase de grupos ET/PK son null, así que la clave equivale al marcador de 90'.
+  // Todas las apuestas con la misma clave obtienen el mismo puntaje (depende solo del
+  // resultado apostado vs. el real), así que tomamos points_earned de cualquiera del grupo.
+  const map = new Map<string, PredictionSummary>()
   for (const row of rows) {
-    const key = `${row.home_score}-${row.away_score}`
+    const key = `${row.home_score}-${row.away_score}-${row.home_score_et ?? ''}-${row.away_score_et ?? ''}-${row.predicted_pk_winner_id ?? ''}`
     if (!map.has(key)) {
-      map.set(key, { home_score: row.home_score, away_score: row.away_score, count: 0 })
+      map.set(key, {
+        home_score: row.home_score,
+        away_score: row.away_score,
+        home_score_et: row.home_score_et,
+        away_score_et: row.away_score_et,
+        predicted_pk_winner_id: row.predicted_pk_winner_id,
+        points_earned: row.points_earned ?? 0,
+        count: 0,
+      })
     }
     map.get(key)!.count++
   }
@@ -134,4 +154,66 @@ export async function fetchMatchPredictionsSummary(matchId: string): Promise<{
   const summary = Array.from(map.values()).sort((a, b) => b.count - a.count)
 
   return { summary, totalPredictions: rows.length }
+}
+
+// Predicción individual de un usuario para un partido (para mostrar el top del ranking)
+export interface MatchUserPrediction {
+  user_id: string
+  display_name: string
+  avatar_url: string | null
+  home_score: number
+  away_score: number
+  home_score_et: number | null
+  away_score_et: number | null
+  predicted_pk_winner_id: string | null
+  points_earned: number | null
+}
+
+// Trae las apuestas de un conjunto de usuarios (p.ej. el top 10 del ranking) para un partido.
+// RLS: los usuarios activos pueden leer las apuestas ajenas recién cuando el partido empezó.
+// Devuelve las filas en el mismo orden que `userIds`.
+export async function fetchMatchTopPredictions(
+  matchId: string,
+  userIds: string[],
+): Promise<MatchUserPrediction[]> {
+  if (userIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('predictions')
+    .select('user_id, home_score, away_score, home_score_et, away_score_et, predicted_pk_winner_id, points_earned, profiles(display_name, avatar_url)')
+    .eq('match_id', matchId)
+    .in('user_id', userIds)
+  if (error) throw error
+
+  const rows = data as Array<{
+    user_id: string
+    home_score: number
+    away_score: number
+    home_score_et: number | null
+    away_score_et: number | null
+    predicted_pk_winner_id: string | null
+    points_earned: number | null
+    profiles: { display_name: string; avatar_url: string | null }[] | { display_name: string; avatar_url: string | null } | null
+  }>
+
+  const byUser = new Map<string, MatchUserPrediction>()
+  for (const row of rows) {
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+    byUser.set(row.user_id, {
+      user_id: row.user_id,
+      display_name: profile?.display_name ?? 'Usuario',
+      avatar_url: profile?.avatar_url ?? null,
+      home_score: row.home_score,
+      away_score: row.away_score,
+      home_score_et: row.home_score_et,
+      away_score_et: row.away_score_et,
+      predicted_pk_winner_id: row.predicted_pk_winner_id,
+      points_earned: row.points_earned,
+    })
+  }
+
+  // Respetar el orden del ranking; omitir a quienes no cargaron apuesta para este partido.
+  return userIds
+    .map(id => byUser.get(id))
+    .filter((p): p is MatchUserPrediction => p != null)
 }
