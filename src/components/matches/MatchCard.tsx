@@ -13,6 +13,7 @@ interface Props {
 
 export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick, footerContent }: Props) {
   const hasScore = match.home_score_90 !== null && match.away_score_90 !== null
+  const hasStarted = new Date(match.match_datetime) <= new Date()
 
   const homeWon = hasScore && match.winner_team_id === match.home_team?.id
   const awayWon = hasScore && match.winner_team_id === match.away_team?.id
@@ -38,12 +39,12 @@ export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick, 
           <span className="text-text-muted text-xs">#{match.match_number}</span>
         </div>
 
-        {hasScore ? (
+        {onPredictionsClick && hasStarted ? (
           <button
             className="flex items-center gap-1 text-text-muted text-xs hover:text-primary transition-colors"
             onClick={(e) => {
               e.stopPropagation()
-              onPredictionsClick?.(match.id)
+              onPredictionsClick(match.id)
             }}
           >
             <Users size={12} />
