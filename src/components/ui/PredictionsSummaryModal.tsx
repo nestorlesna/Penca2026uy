@@ -85,8 +85,8 @@ export function PredictionsSummaryModal({
               <span>{totalPredictions} predicciones</span>
             </div>
 
-            {/* Lista de resultados — 2 columnas con scroll propio */}
-            <div className="grid grid-cols-2 gap-2 max-h-[26vh] overflow-y-auto pr-1 -mr-1">
+            {/* Lista de resultados — 1 columna con scroll propio */}
+            <div className="space-y-2 max-h-[26vh] overflow-y-auto pr-1 -mr-1">
               {summary.map((item) => {
                 const isExact = homeScore === item.home_score && awayScore === item.away_score
                 const pct = totalPredictions > 0 ? Math.round((item.count / totalPredictions) * 100) : 0
@@ -160,14 +160,22 @@ export function PredictionsSummaryModal({
           </>
         )}
 
-        {/* Aviso cuando el partido empezó pero aún no hay resultado cargado */}
+        {/* Partido empezó pero aún no hay resultado cargado: cabezal sin goles + aviso */}
         {!resultLoaded && (
-          <div className="bg-surface-2 border border-border rounded-lg p-3 text-center">
-            <p className="text-xs text-text-secondary">
-              El partido comenzó. Cuando el admin cargue el resultado vas a ver el marcador y el
-              detalle de todas las apuestas.
-            </p>
-          </div>
+          <>
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
+              <p className="text-xs text-text-secondary mb-1">Resultado</p>
+              <p className="text-lg font-bold text-text-primary">
+                {homeTeam} <span className="text-text-muted">-</span> {awayTeam}
+              </p>
+            </div>
+            <div className="bg-surface-2 border border-border rounded-lg p-3 text-center">
+              <p className="text-xs text-text-secondary">
+                El partido comenzó. Cuando el admin cargue el resultado vas a ver el marcador y el
+                detalle de todas las apuestas.
+              </p>
+            </div>
+          </>
         )}
 
         {/* ── Top 10 del ranking: siempre que el partido haya empezado ── */}

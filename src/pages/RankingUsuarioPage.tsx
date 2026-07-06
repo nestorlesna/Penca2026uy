@@ -26,25 +26,37 @@ function fmtBetDate(iso: string): string {
   }) + ' · ' + formatMatchTime(iso)
 }
 
-// Resultado real del partido (90' + ET/PK si aplica)
-function realScore(m: PredictionWithMatch['match']): string {
-  let s = `${m.home_score_90}–${m.away_score_90}`
-  if (m.home_score_et !== null && m.away_score_et !== null) {
-    s += ` (ET ${m.home_score_et}:${m.away_score_et})`
-  }
-  if (m.home_score_pk !== null && m.away_score_pk !== null) {
-    s += ` (pen ${m.home_score_pk}:${m.away_score_pk})`
-  }
-  return s
+// Abreviatura del equipo por id (para el ganador de penales)
+function teamAbbrById(m: PredictionWithMatch['match'], id: string | null): string {
+  if (!id) return ''
+  if (m.home_team?.id === id) return m.home_team.abbreviation
+  if (m.away_team?.id === id) return m.away_team.abbreviation
+  return ''
 }
 
-// Apuesta del usuario (90' + ET si la hizo)
-function predScore(p: PredictionWithMatch): string {
-  let s = `${p.home_score}–${p.away_score}`
-  if (p.home_score_et !== null && p.away_score_et !== null) {
-    s += ` (ET ${p.home_score_et}:${p.away_score_et})`
+// Resultado real del partido (90' + ET/PK si aplica), una línea por capa
+function realLines(m: PredictionWithMatch['match']): string[] {
+  const lines = [`${m.home_score_90}–${m.away_score_90}`]
+  if (m.home_score_et !== null && m.away_score_et !== null) {
+    lines.push(`ET ${m.home_score_et}–${m.away_score_et}`)
   }
-  return s
+  if (m.home_score_pk !== null && m.away_score_pk !== null) {
+    const winnerId = m.home_score_pk > m.away_score_pk ? m.home_team?.id : m.away_team?.id
+    const abbr = teamAbbrById(m, winnerId ?? null)
+    lines.push(`Pen ${abbr || `${m.home_score_pk}–${m.away_score_pk}`}`)
+  }
+  return lines
+}
+
+// Apuesta del usuario (90' + ET + ganador de penales si la hizo)
+function predLines(p: PredictionWithMatch): string[] {
+  const lines = [`${p.home_score}–${p.away_score}`]
+  if (p.home_score_et !== null && p.away_score_et !== null) {
+    lines.push(`ET ${p.home_score_et}–${p.away_score_et}`)
+  }
+  const abbr = teamAbbrById(p.match, p.predicted_pk_winner_id)
+  if (abbr) lines.push(`Pen ${abbr}`)
+  return lines
 }
 
 function MatchRow({ pred }: { pred: PredictionWithMatch }) {
@@ -74,13 +86,23 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
             <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="right" abbrev />
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 text-[11px]">
-          <span className="text-text-primary font-semibold tabular-nums">
-            Real: {realScore(m)}
-          </span>
-          <span className="text-text-muted tabular-nums">
-            Apuesta: {predScore(pred)}
-          </span>
+        <div className="flex items-start justify-between gap-2 text-[11px]">
+          <div className="text-text-primary font-semibold tabular-nums leading-tight">
+            {realLines(m).map((l, i) => (
+              <span key={i} className={i === 0 ? '' : 'block'}>
+                {i === 0 && <span className="text-text-muted font-normal">Real: </span>}
+                {l}
+              </span>
+            ))}
+          </div>
+          <div className="text-text-muted tabular-nums leading-tight text-right">
+            {predLines(pred).map((l, i) => (
+              <span key={i} className={i === 0 ? '' : 'block'}>
+                {i === 0 && <span>Apuesta: </span>}
+                {l}
+              </span>
+            ))}
+          </div>
         </div>
         <p className="text-[10px] text-text-muted">
           Apostado: {fmtBetDate(pred.updated_at)}
