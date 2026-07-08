@@ -34,38 +34,41 @@ function teamAbbrById(m: PredictionWithMatch['match'], id: string | null): strin
   return ''
 }
 
-// Resultado real del partido (90' + ET/PK si aplica), una línea por capa
-function realLines(m: PredictionWithMatch['match']): string[] {
-  const lines = [`${m.home_score_90}–${m.away_score_90}`]
+// Resultado real: marcador de 90' + capas extra (ET / penales)
+function realParts(m: PredictionWithMatch['match']): { main: string; extras: string[] } {
+  const extras: string[] = []
   if (m.home_score_et !== null && m.away_score_et !== null) {
-    lines.push(`ET ${m.home_score_et}–${m.away_score_et}`)
+    extras.push(`T.E. ${m.home_score_et}–${m.away_score_et}`)
   }
   if (m.home_score_pk !== null && m.away_score_pk !== null) {
     const winnerId = m.home_score_pk > m.away_score_pk ? m.home_team?.id : m.away_team?.id
     const abbr = teamAbbrById(m, winnerId ?? null)
-    lines.push(`Pen ${abbr || `${m.home_score_pk}–${m.away_score_pk}`}`)
+    extras.push(`Penales ${abbr || `${m.home_score_pk}–${m.away_score_pk}`}`)
   }
-  return lines
+  return { main: `${m.home_score_90}–${m.away_score_90}`, extras }
 }
 
-// Apuesta del usuario (90' + ET + ganador de penales si la hizo)
-function predLines(p: PredictionWithMatch): string[] {
-  const lines = [`${p.home_score}–${p.away_score}`]
+// Apuesta del usuario: marcador de 90' + capas extra (ET / ganador de penales)
+function predParts(p: PredictionWithMatch): { main: string; extras: string[] } {
+  const extras: string[] = []
   if (p.home_score_et !== null && p.away_score_et !== null) {
-    lines.push(`ET ${p.home_score_et}–${p.away_score_et}`)
+    extras.push(`T.E. ${p.home_score_et}–${p.away_score_et}`)
   }
   const abbr = teamAbbrById(p.match, p.predicted_pk_winner_id)
-  if (abbr) lines.push(`Pen ${abbr}`)
-  return lines
+  if (abbr) extras.push(`Penales ${abbr}`)
+  return { main: `${p.home_score}–${p.away_score}`, extras }
 }
 
 function MatchRow({ pred }: { pred: PredictionWithMatch }) {
   const m = pred.match
+  const real = realParts(m)
+  const bet = predParts(pred)
+
   return (
-    <div className="card p-3 flex items-center gap-3">
-      {/* Número + fase/grupo */}
-      <div className="flex-shrink-0 w-10 text-center">
-        <p className="text-[11px] text-text-muted">#{m.match_number}</p>
+    <div className="card p-3 space-y-2.5">
+      {/* Cabecera: número · fase · fecha · puntos */}
+      <div className="flex items-center gap-2 text-[11px] text-text-muted">
+        <span className="font-medium">#{m.match_number}</span>
         {m.group ? (
           <span className="badge-primary text-[9px]">G{m.group.name}</span>
         ) : (
@@ -73,46 +76,41 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
             {m.phase.name.substring(0, 3)}
           </span>
         )}
-      </div>
-
-      {/* Equipos + resultados */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0">
-            <TeamFlag team={m.home_team} slotLabel={m.home_slot_label} size="sm" align="left" abbrev />
-          </div>
-          <span className="text-text-muted text-xs">vs</span>
-          <div className="flex-1 min-w-0 flex justify-end">
-            <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="right" abbrev />
-          </div>
-        </div>
-        <div className="flex items-start justify-between gap-2 text-[11px]">
-          <div className="text-text-primary font-semibold tabular-nums leading-tight">
-            {realLines(m).map((l, i) => (
-              <span key={i} className={i === 0 ? '' : 'block'}>
-                {i === 0 && <span className="text-text-muted font-normal">Real: </span>}
-                {l}
-              </span>
-            ))}
-          </div>
-          <div className="text-text-muted tabular-nums leading-tight text-right">
-            {predLines(pred).map((l, i) => (
-              <span key={i} className={i === 0 ? '' : 'block'}>
-                {i === 0 && <span>Apuesta: </span>}
-                {l}
-              </span>
-            ))}
-          </div>
-        </div>
-        <p className="text-[10px] text-text-muted">
-          Apostado: {fmtBetDate(pred.updated_at)}
-        </p>
-      </div>
-
-      {/* Puntos */}
-      <div className="flex-shrink-0">
-        <span className="badge bg-primary/20 text-primary text-[11px] font-semibold">
+        <span className="truncate">{fmtBetDate(pred.updated_at)}</span>
+        <span className="ml-auto badge bg-primary/20 text-primary text-[11px] font-semibold flex-shrink-0">
           +{pred.points_earned} pts
+        </span>
+      </div>
+
+      {/* Marcador real (protagonista, centrado entre banderas) */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 flex justify-end">
+          <TeamFlag team={m.home_team} slotLabel={m.home_slot_label} size="sm" align="right" abbrev />
+        </div>
+        <div className="flex-shrink-0 px-3 py-1 rounded-lg bg-background border border-border">
+          <span className="text-base font-bold tabular-nums text-text-primary leading-none">
+            {real.main.replace('–', ' – ')}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="left" abbrev />
+        </div>
+      </div>
+
+      {/* Capas extra reales (tiempo extra / penales) */}
+      {real.extras.length > 0 && (
+        <p className="text-center text-[10px] text-text-secondary tabular-nums -mt-1">
+          {real.extras.join('  ·  ')}
+        </p>
+      )}
+
+      {/* Apuesta del usuario, tira propia y diferenciada */}
+      <div className="flex items-center gap-2 rounded-lg bg-primary/[0.06] border border-primary/15 px-3 py-1.5">
+        <span className="text-[10px] uppercase tracking-wide text-text-muted flex-shrink-0">
+          Tu apuesta
+        </span>
+        <span className="ml-auto text-right text-xs font-semibold tabular-nums text-text-primary">
+          {[bet.main, ...bet.extras].join('  ·  ')}
         </span>
       </div>
     </div>
