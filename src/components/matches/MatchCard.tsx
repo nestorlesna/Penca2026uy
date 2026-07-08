@@ -87,7 +87,7 @@ export function MatchCard({ match, onClick, onStadiumClick, onPredictionsClick, 
 
           {/* Indicadores de ET y penales */}
           {match.home_score_et !== null && (
-            <div className="text-xs text-text-muted mt-1 tabular-nums">
+            <div className="text-sm text-text-secondary font-medium mt-1 tabular-nums">
               ET {match.home_score_et} - {match.away_score_et}
             </div>
           )}

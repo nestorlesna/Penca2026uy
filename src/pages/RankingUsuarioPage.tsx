@@ -78,8 +78,8 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
   const betPenAway = pred.predicted_pk_winner_id !== null && pred.predicted_pk_winner_id === m.away_team?.id
 
   // Casillas: locatario pegado al centro de su grupo (der.), visitante al centro (izq.)
-  const homeCell = 'py-1 flex justify-end pr-0.5'
-  const awayCell = 'py-1 flex justify-start pl-0.5'
+  const homeCell = 'py-1 flex justify-end pr-2'
+  const awayCell = 'py-1 flex justify-start pl-2'
   // Divisor Real / Apuesta, marcado
   const divider = 'border-l-2 border-text-muted/50 pl-2'
 
@@ -105,19 +105,19 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
       <div className="grid grid-cols-[2.5rem_1fr_1fr_1fr_1fr] items-center gap-x-0">
         {/* Títulos de grupo */}
         <div />
-        <div className="col-span-2 text-center text-[11px] font-semibold text-text-secondary pb-1.5">
+        <div className="col-span-2 text-center text-sm font-semibold text-text-secondary pb-1.5">
           Real
         </div>
-        <div className={`col-span-2 text-center text-[11px] font-semibold text-text-secondary pb-1.5 ${divider}`}>
+        <div className={`col-span-2 text-center text-sm font-semibold text-text-secondary pb-1.5 ${divider}`}>
           Apuesta
         </div>
 
         {/* Banderas */}
         <div />
-        <div className={`pb-2 flex justify-end pr-0.5`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
-        <div className={`pb-2 flex justify-start pl-0.5`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
-        <div className={`pb-2 flex justify-end pr-0.5 ${divider}`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
-        <div className={`pb-2 flex justify-start pl-0.5`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
+        <div className={`pb-2 flex justify-end pr-2`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className={`pb-2 flex justify-start pl-2`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
+        <div className={`pb-2 flex justify-end pr-2 ${divider}`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className={`pb-2 flex justify-start pl-2`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
 
         {/* 90' */}
         <div className="text-right text-[11px] text-text-muted pr-2 py-1">90'</div>

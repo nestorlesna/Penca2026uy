@@ -24,12 +24,23 @@ const PHASE_TABS = [
 ]
 
 function ScoreBadge({ pred }: { pred: PredictionWithMatch }) {
+  const pkId = pred.predicted_pk_winner_id
+  const pkAbbr = pkId === pred.match.home_team?.id
+    ? pred.match.home_team?.abbreviation
+    : pkId === pred.match.away_team?.id
+      ? pred.match.away_team?.abbreviation
+      : null
   return (
     <span className="text-sm font-bold tabular-nums text-text-primary">
       {pred.home_score} – {pred.away_score}
       {pred.home_score_et !== null && (
         <span className="text-xs text-text-muted ml-1">
-          (ET {pred.home_score_et}:{pred.away_score_et})
+          (ET {pred.home_score_et}-{pred.away_score_et})
+        </span>
+      )}
+      {pkAbbr && (
+        <span className="text-xs text-text-muted ml-1">
+          (Pen {pkAbbr})
         </span>
       )}
     </span>
