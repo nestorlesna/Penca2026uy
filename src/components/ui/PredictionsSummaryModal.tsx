@@ -56,6 +56,9 @@ export function PredictionsSummaryModal({
     return null
   }
 
+  // Plantilla de columnas del Top 10: Nombre · Resultado · ET · Pen · Pts
+  const topGrid = 'grid grid-cols-[1fr_2.5rem_3.5rem_4.75rem_2.75rem] items-center gap-1.5'
+
   return (
     <Modal open={open} onClose={onClose} title="Predicciones" size="md">
       <div className="space-y-4">
@@ -185,6 +188,15 @@ export function PredictionsSummaryModal({
               <Trophy size={14} className="text-accent" />
               Apuestas del Top 10
             </h3>
+            {/* Cabecera de columnas */}
+            <div className={`${topGrid} px-2 text-[9px] uppercase tracking-wide text-text-muted`}>
+              <span>Nombre</span>
+              <span className="text-center">Res.</span>
+              <span className="text-center">ET</span>
+              <span className="text-center">Pen</span>
+              <span className="text-right">Pts</span>
+            </div>
+
             <div className={`space-y-1.5 overflow-y-auto pr-1 -mr-1 ${resultLoaded ? 'max-h-[22vh]' : 'max-h-[50vh]'}`}>
               {topPredictions.map((p) => {
                 const hasEt = p.home_score_et != null && p.away_score_et != null
@@ -192,39 +204,49 @@ export function PredictionsSummaryModal({
                 return (
                   <div
                     key={p.user_id}
-                    className="flex items-center gap-2 rounded-lg bg-surface-2 border border-border p-2"
+                    className={`${topGrid} rounded-lg bg-surface-2 border border-border p-2`}
                   >
-                    {/* Avatar / inicial */}
-                    {p.avatar_url ? (
-                      <img src={p.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-primary font-bold text-[11px]">
-                          {p.display_name[0]?.toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    {/* Nombre (avatar + nombre) */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-primary font-bold text-[11px]">
+                            {p.display_name[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <span className="min-w-0 text-sm text-text-primary truncate">
+                        {p.display_name}
+                      </span>
+                    </div>
 
-                    {/* Nombre */}
-                    <span className="flex-1 min-w-0 text-sm text-text-primary truncate">
-                      {p.display_name}
+                    {/* Resultado */}
+                    <span className="text-sm font-bold text-text-primary tabular-nums text-center">
+                      {p.home_score}-{p.away_score}
                     </span>
 
-                    {/* Resultado apostado */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* ET */}
+                    <div className="flex justify-center">
                       {hasEt && (
                         <span className="badge bg-accent/20 text-accent text-[10px] font-semibold tabular-nums">
-                          ET {p.home_score_et}:{p.away_score_et}
+                          ET {p.home_score_et}-{p.away_score_et}
                         </span>
                       )}
+                    </div>
+
+                    {/* Penales */}
+                    <div className="flex justify-center min-w-0">
                       {pkWinner && (
-                        <span className="badge bg-surface border border-border text-text-secondary text-[10px] font-medium max-w-[80px] truncate">
-                          pen {pkWinner}
+                        <span className="badge bg-surface border border-border text-text-secondary text-[10px] font-medium truncate max-w-full">
+                          Pen: {pkWinner}
                         </span>
                       )}
-                      <span className="text-sm font-bold text-text-primary tabular-nums">
-                        {p.home_score}-{p.away_score}
-                      </span>
+                    </div>
+
+                    {/* Puntos */}
+                    <div className="flex justify-end">
                       {resultLoaded && (p.points_earned ?? 0) > 0 && (
                         <span className="badge-primary text-[10px] font-semibold">
                           +{p.points_earned}p
