@@ -44,7 +44,10 @@
       "PowerShell(git push *)",
       "PowerShell(npx eslint src/pages/RankingUsuarioPage.tsx src/pages/RankingPage.tsx src/hooks/useUserDetail.ts src/App.tsx --ext ts,tsx 2>&1 | Select-Object -First 40)",
       "PowerShell(git stash *)",
-      "PowerShell(git add *)"
+      "PowerShell(git add *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "PowerShell($p = Get-Process -Name node -ErrorAction SilentlyContinue; if \\($p\\) { \"node running: $\\($p.Id -join ','\\)\" } else { \"no node\" })",
+      "Bash(npx eslint *)"
     ]
   }
 }
