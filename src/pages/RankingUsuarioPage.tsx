@@ -45,7 +45,7 @@ function TeamHead({ team, slot }: { team: TeamLite; slot: string | null }) {
 // Casilla de marcador (un valor por equipo)
 function ScoreBox({ value }: { value: number | null }) {
   return (
-    <div className="mx-auto w-8 h-8 rounded-md bg-background border border-border flex items-center justify-center">
+    <div className="w-8 h-8 rounded-md bg-background border border-border flex items-center justify-center">
       <span className="text-sm font-bold tabular-nums text-text-primary">
         {value ?? '–'}
       </span>
@@ -56,7 +56,7 @@ function ScoreBox({ value }: { value: number | null }) {
 // Casilla de penales: check verde en el ganador
 function PenBox({ won }: { won: boolean }) {
   return (
-    <div className="mx-auto w-8 h-8 flex items-center justify-center">
+    <div className="w-8 h-8 flex items-center justify-center">
       {won
         ? <Check size={18} className="text-primary" strokeWidth={3} />
         : <span className="text-text-muted text-sm">·</span>}
@@ -77,7 +77,11 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
   const betPenHome = pred.predicted_pk_winner_id !== null && pred.predicted_pk_winner_id === m.home_team?.id
   const betPenAway = pred.predicted_pk_winner_id !== null && pred.predicted_pk_winner_id === m.away_team?.id
 
-  const divider = 'border-l border-border'
+  // Casillas: locatario pegado al centro de su grupo (der.), visitante al centro (izq.)
+  const homeCell = 'py-1 flex justify-end pr-0.5'
+  const awayCell = 'py-1 flex justify-start pl-0.5'
+  // Divisor Real / Apuesta, marcado
+  const divider = 'border-l-2 border-text-muted/50 pl-2'
 
   return (
     <div className="card p-3 space-y-3">
@@ -98,7 +102,7 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
       </div>
 
       {/* Tabla Real / Apuesta */}
-      <div className="grid grid-cols-[2.5rem_1fr_1fr_1fr_1fr] items-center gap-x-1">
+      <div className="grid grid-cols-[2.5rem_1fr_1fr_1fr_1fr] items-center gap-x-0">
         {/* Títulos de grupo */}
         <div />
         <div className="col-span-2 text-center text-[11px] font-semibold text-text-secondary pb-1.5">
@@ -110,26 +114,26 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
 
         {/* Banderas */}
         <div />
-        <div className="pb-2"><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
-        <div className="pb-2"><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
-        <div className={`pb-2 ${divider}`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
-        <div className="pb-2"><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
+        <div className={`pb-2 flex justify-end pr-0.5`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className={`pb-2 flex justify-start pl-0.5`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
+        <div className={`pb-2 flex justify-end pr-0.5 ${divider}`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className={`pb-2 flex justify-start pl-0.5`}><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
 
         {/* 90' */}
         <div className="text-right text-[11px] text-text-muted pr-2 py-1">90'</div>
-        <div className="py-1"><ScoreBox value={m.home_score_90} /></div>
-        <div className="py-1"><ScoreBox value={m.away_score_90} /></div>
-        <div className={`py-1 ${divider}`}><ScoreBox value={pred.home_score} /></div>
-        <div className="py-1"><ScoreBox value={pred.away_score} /></div>
+        <div className={homeCell}><ScoreBox value={m.home_score_90} /></div>
+        <div className={awayCell}><ScoreBox value={m.away_score_90} /></div>
+        <div className={`${homeCell} ${divider}`}><ScoreBox value={pred.home_score} /></div>
+        <div className={awayCell}><ScoreBox value={pred.away_score} /></div>
 
         {/* 30' (tiempo extra) */}
         {showEt && (
           <>
             <div className="text-right text-[11px] text-text-muted pr-2 py-1">30'</div>
-            <div className="py-1"><ScoreBox value={m.home_score_et} /></div>
-            <div className="py-1"><ScoreBox value={m.away_score_et} /></div>
-            <div className={`py-1 ${divider}`}><ScoreBox value={pred.home_score_et} /></div>
-            <div className="py-1"><ScoreBox value={pred.away_score_et} /></div>
+            <div className={homeCell}><ScoreBox value={m.home_score_et} /></div>
+            <div className={awayCell}><ScoreBox value={m.away_score_et} /></div>
+            <div className={`${homeCell} ${divider}`}><ScoreBox value={pred.home_score_et} /></div>
+            <div className={awayCell}><ScoreBox value={pred.away_score_et} /></div>
           </>
         )}
 
@@ -137,10 +141,10 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
         {showPen && (
           <>
             <div className="text-right text-[11px] text-text-muted pr-2 py-1">Pen</div>
-            <div className="py-1"><PenBox won={realPenHome} /></div>
-            <div className="py-1"><PenBox won={realPenAway} /></div>
-            <div className={`py-1 ${divider}`}><PenBox won={betPenHome} /></div>
-            <div className="py-1"><PenBox won={betPenAway} /></div>
+            <div className={homeCell}><PenBox won={realPenHome} /></div>
+            <div className={awayCell}><PenBox won={realPenAway} /></div>
+            <div className={`${homeCell} ${divider}`}><PenBox won={betPenHome} /></div>
+            <div className={awayCell}><PenBox won={betPenAway} /></div>
           </>
         )}
       </div>
