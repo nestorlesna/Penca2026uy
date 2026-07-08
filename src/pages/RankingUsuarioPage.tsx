@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Loader2, ArrowLeft, Trophy, Star, Gift } from 'lucide-react'
-import { TeamFlag } from '../components/ui/TeamFlag'
+import { Loader2, ArrowLeft, Trophy, Star, Gift, Check } from 'lucide-react'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useUserPredictions, useUserBonusPoints } from '../hooks/useUserDetail'
 import { formatMatchTime } from '../utils/datetime'
@@ -26,47 +25,63 @@ function fmtBetDate(iso: string): string {
   }) + ' · ' + formatMatchTime(iso)
 }
 
-// Abreviatura del equipo por id (para el ganador de penales)
-function teamAbbrById(m: PredictionWithMatch['match'], id: string | null): string {
-  if (!id) return ''
-  if (m.home_team?.id === id) return m.home_team.abbreviation
-  if (m.away_team?.id === id) return m.away_team.abbreviation
-  return ''
+type TeamLite = PredictionWithMatch['match']['home_team']
+
+// Encabezado de columna de equipo: abreviatura + bandera
+function TeamHead({ team, slot }: { team: TeamLite; slot: string | null }) {
+  const abbr = team?.abbreviation ?? slot ?? '?'
+  return (
+    <div className="flex items-center justify-center gap-1">
+      <span className="text-[11px] font-semibold text-text-secondary">{abbr}</span>
+      {team?.flag_url ? (
+        <img src={team.flag_url} alt="" className="w-4 h-4 rounded-sm object-cover flex-shrink-0" loading="lazy" />
+      ) : (
+        <div className="w-4 h-4 rounded-sm bg-border flex-shrink-0" />
+      )}
+    </div>
+  )
 }
 
-// Resultado real: marcador de 90' + capas extra (ET / penales)
-function realParts(m: PredictionWithMatch['match']): { main: string; extras: string[] } {
-  const extras: string[] = []
-  if (m.home_score_et !== null && m.away_score_et !== null) {
-    extras.push(`T.E. ${m.home_score_et}–${m.away_score_et}`)
-  }
-  if (m.home_score_pk !== null && m.away_score_pk !== null) {
-    const winnerId = m.home_score_pk > m.away_score_pk ? m.home_team?.id : m.away_team?.id
-    const abbr = teamAbbrById(m, winnerId ?? null)
-    extras.push(`Penales ${abbr || `${m.home_score_pk}–${m.away_score_pk}`}`)
-  }
-  return { main: `${m.home_score_90}–${m.away_score_90}`, extras }
+// Casilla de marcador (un valor por equipo)
+function ScoreBox({ value }: { value: number | null }) {
+  return (
+    <div className="mx-auto w-8 h-8 rounded-md bg-background border border-border flex items-center justify-center">
+      <span className="text-sm font-bold tabular-nums text-text-primary">
+        {value ?? '–'}
+      </span>
+    </div>
+  )
 }
 
-// Apuesta del usuario: marcador de 90' + capas extra (ET / ganador de penales)
-function predParts(p: PredictionWithMatch): { main: string; extras: string[] } {
-  const extras: string[] = []
-  if (p.home_score_et !== null && p.away_score_et !== null) {
-    extras.push(`T.E. ${p.home_score_et}–${p.away_score_et}`)
-  }
-  const abbr = teamAbbrById(p.match, p.predicted_pk_winner_id)
-  if (abbr) extras.push(`Penales ${abbr}`)
-  return { main: `${p.home_score}–${p.away_score}`, extras }
+// Casilla de penales: check verde en el ganador
+function PenBox({ won }: { won: boolean }) {
+  return (
+    <div className="mx-auto w-8 h-8 flex items-center justify-center">
+      {won
+        ? <Check size={18} className="text-primary" strokeWidth={3} />
+        : <span className="text-text-muted text-sm">·</span>}
+    </div>
+  )
 }
 
 function MatchRow({ pred }: { pred: PredictionWithMatch }) {
   const m = pred.match
-  const real = realParts(m)
-  const bet = predParts(pred)
+
+  // ¿Qué filas mostrar? 90' siempre; 30' (T.E.) y Pen solo si hay datos.
+  const showEt = m.home_score_et !== null || pred.home_score_et !== null
+  const showPen = m.home_score_pk !== null || pred.predicted_pk_winner_id !== null
+
+  // Ganadores de penales (real y apuesta) por columna
+  const realPenHome = m.home_score_pk !== null && m.away_score_pk !== null && m.home_score_pk > m.away_score_pk
+  const realPenAway = m.home_score_pk !== null && m.away_score_pk !== null && m.away_score_pk > m.home_score_pk
+  const betPenHome = pred.predicted_pk_winner_id !== null && pred.predicted_pk_winner_id === m.home_team?.id
+  const betPenAway = pred.predicted_pk_winner_id !== null && pred.predicted_pk_winner_id === m.away_team?.id
+
+  const divider = 'border-l border-border'
 
   return (
-    <div className="card p-3 space-y-2.5">
-      {/* Cabecera: número · fase · fecha · puntos */}
+    <div className="card p-3 space-y-3">
+      {/* Cabecera: número · fase · última actualización · puntos */}
       <div className="flex items-center gap-2 text-[11px] text-text-muted">
         <span className="font-medium">#{m.match_number}</span>
         {m.group ? (
@@ -76,42 +91,58 @@ function MatchRow({ pred }: { pred: PredictionWithMatch }) {
             {m.phase.name.substring(0, 3)}
           </span>
         )}
-        <span className="truncate">{fmtBetDate(pred.updated_at)}</span>
+        <span className="truncate">Ult. Act. {fmtBetDate(pred.updated_at)}</span>
         <span className="ml-auto badge bg-primary/20 text-primary text-[11px] font-semibold flex-shrink-0">
           +{pred.points_earned} pts
         </span>
       </div>
 
-      {/* Marcador real (protagonista, centrado entre banderas) */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 min-w-0 flex justify-end">
-          <TeamFlag team={m.home_team} slotLabel={m.home_slot_label} size="sm" align="right" abbrev />
+      {/* Tabla Real / Apuesta */}
+      <div className="grid grid-cols-[2.5rem_1fr_1fr_1fr_1fr] items-center gap-x-1">
+        {/* Títulos de grupo */}
+        <div />
+        <div className="col-span-2 text-center text-[11px] font-semibold text-text-secondary pb-1.5">
+          Real
         </div>
-        <div className="flex-shrink-0 px-3 py-1 rounded-lg bg-background border border-border">
-          <span className="text-base font-bold tabular-nums text-text-primary leading-none">
-            {real.main.replace('–', ' – ')}
-          </span>
+        <div className={`col-span-2 text-center text-[11px] font-semibold text-text-secondary pb-1.5 ${divider}`}>
+          Apuesta
         </div>
-        <div className="flex-1 min-w-0">
-          <TeamFlag team={m.away_team} slotLabel={m.away_slot_label} size="sm" align="left" abbrev />
-        </div>
-      </div>
 
-      {/* Capas extra reales (tiempo extra / penales) */}
-      {real.extras.length > 0 && (
-        <p className="text-center text-[10px] text-text-secondary tabular-nums -mt-1">
-          {real.extras.join('  ·  ')}
-        </p>
-      )}
+        {/* Banderas */}
+        <div />
+        <div className="pb-2"><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className="pb-2"><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
+        <div className={`pb-2 ${divider}`}><TeamHead team={m.home_team} slot={m.home_slot_label} /></div>
+        <div className="pb-2"><TeamHead team={m.away_team} slot={m.away_slot_label} /></div>
 
-      {/* Apuesta del usuario, tira propia y diferenciada */}
-      <div className="flex items-center gap-2 rounded-lg bg-primary/[0.06] border border-primary/15 px-3 py-1.5">
-        <span className="text-[10px] uppercase tracking-wide text-text-muted flex-shrink-0">
-          Tu apuesta
-        </span>
-        <span className="ml-auto text-right text-xs font-semibold tabular-nums text-text-primary">
-          {[bet.main, ...bet.extras].join('  ·  ')}
-        </span>
+        {/* 90' */}
+        <div className="text-right text-[11px] text-text-muted pr-2 py-1">90'</div>
+        <div className="py-1"><ScoreBox value={m.home_score_90} /></div>
+        <div className="py-1"><ScoreBox value={m.away_score_90} /></div>
+        <div className={`py-1 ${divider}`}><ScoreBox value={pred.home_score} /></div>
+        <div className="py-1"><ScoreBox value={pred.away_score} /></div>
+
+        {/* 30' (tiempo extra) */}
+        {showEt && (
+          <>
+            <div className="text-right text-[11px] text-text-muted pr-2 py-1">30'</div>
+            <div className="py-1"><ScoreBox value={m.home_score_et} /></div>
+            <div className="py-1"><ScoreBox value={m.away_score_et} /></div>
+            <div className={`py-1 ${divider}`}><ScoreBox value={pred.home_score_et} /></div>
+            <div className="py-1"><ScoreBox value={pred.away_score_et} /></div>
+          </>
+        )}
+
+        {/* Penales */}
+        {showPen && (
+          <>
+            <div className="text-right text-[11px] text-text-muted pr-2 py-1">Pen</div>
+            <div className="py-1"><PenBox won={realPenHome} /></div>
+            <div className="py-1"><PenBox won={realPenAway} /></div>
+            <div className={`py-1 ${divider}`}><PenBox won={betPenHome} /></div>
+            <div className="py-1"><PenBox won={betPenAway} /></div>
+          </>
+        )}
       </div>
     </div>
   )
