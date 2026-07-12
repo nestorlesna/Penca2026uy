@@ -68,8 +68,10 @@ export function PredictionsSummaryModal({
     return null
   }
 
-  // Columnas de la 2da línea del Top 10: Resultado · ET · Pen · Pts
-  const topGrid = 'grid grid-cols-[3rem_3rem_1fr_3rem] items-center gap-2'
+  // Columnas de la 2da línea del Top 100: Resultado · ET · Pen · Pts
+  // Anchos fijos + justify-end: el bloque queda pegado a la derecha y las
+  // columnas alinean entre usuarios aunque falte el ET o los penales.
+  const topGrid = 'grid grid-cols-[3rem_3rem_3.5rem_3.5rem] justify-end items-center gap-2'
 
   return (
     <Modal open={open} onClose={onClose} title="Predicciones" size="md">
@@ -193,12 +195,12 @@ export function PredictionsSummaryModal({
           </>
         )}
 
-        {/* ── Top 10 del ranking: siempre que el partido haya empezado ── */}
+        {/* ── Top 100 del ranking: siempre que el partido haya empezado ── */}
         {topPredictions.length > 0 && (
           <section className="space-y-2">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
               <Trophy size={14} className="text-accent" />
-              Apuestas del Top 10
+              Apuestas del Top 100
             </h3>
             <div className={`space-y-1.5 overflow-y-auto pr-1 -mr-1 ${resultLoaded ? 'max-h-[26vh]' : 'max-h-[50vh]'}`}>
               {topPredictions.map((p) => {
@@ -228,12 +230,12 @@ export function PredictionsSummaryModal({
                     {/* 2da línea: Resultado · ET · Pen · Pts */}
                     <div className={topGrid}>
                       {/* Resultado */}
-                      <span className="text-sm font-bold text-text-primary tabular-nums">
+                      <span className="text-sm font-bold text-text-primary tabular-nums text-right">
                         {p.home_score}-{p.away_score}
                       </span>
 
                       {/* ET */}
-                      <div className="flex justify-start">
+                      <div className="flex justify-end">
                         {hasEt && (
                           <span className="badge bg-accent/20 text-accent text-[10px] font-semibold tabular-nums">
                             {p.home_score_et}-{p.away_score_et}
@@ -242,7 +244,7 @@ export function PredictionsSummaryModal({
                       </div>
 
                       {/* Penales */}
-                      <div className="flex justify-start min-w-0">
+                      <div className="flex justify-end min-w-0">
                         {pkWinner && (
                           <span className="badge bg-surface border border-border text-text-secondary text-[10px] font-medium truncate max-w-full">
                             {pkWinner}

@@ -80,8 +80,8 @@ export function FixturePage() {
     if (!match) return
     const resultLoaded = match.home_score_90 !== null && match.away_score_90 !== null
 
-    // Top 10 del ranking + sus apuestas para este partido (siempre, una vez empezado)
-    const topUserIds = leaderboard.slice(0, 10).map(e => e.user_id)
+    // Top 100 del ranking + sus apuestas para este partido (siempre, una vez empezado)
+    const topUserIds = leaderboard.slice(0, 100).map(e => e.user_id)
     const topPredictions = await fetchMatchTopPredictions(matchId, topUserIds)
 
     // El resumen (resultado + % de apuestas) solo cuando el admin ya cargó el resultado

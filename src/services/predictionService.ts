@@ -169,7 +169,7 @@ export interface MatchUserPrediction {
   points_earned: number | null
 }
 
-// Trae las apuestas de un conjunto de usuarios (p.ej. el top 10 del ranking) para un partido.
+// Trae las apuestas de un conjunto de usuarios (p.ej. el top 100 del ranking) para un partido.
 // RLS: los usuarios activos pueden leer las apuestas ajenas recién cuando el partido empezó.
 // Devuelve las filas en el mismo orden que `userIds`.
 export async function fetchMatchTopPredictions(
