@@ -88,9 +88,9 @@ export function PredictionsSummaryModal({
                 </p>
                 {(realHasEt || realHasPk) && (
                   <p className="text-xs text-text-secondary mt-1 tabular-nums">
-                    {realHasEt && <span>ET {homeScoreEt}:{awayScoreEt}</span>}
+                    {realHasEt && <span>ET {homeScoreEt}-{awayScoreEt}</span>}
                     {realHasEt && realHasPk && <span> · </span>}
-                    {realHasPk && <span>Penales {homeScorePk}:{awayScorePk}</span>}
+                    {realHasPk && <span>Penales {homeScorePk}-{awayScorePk}</span>}
                   </p>
                 )}
               </div>
@@ -150,7 +150,7 @@ export function PredictionsSummaryModal({
                       <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                         {hasEt && (
                           <span className="badge bg-accent/20 text-accent text-[10px] font-semibold tabular-nums">
-                            ET {item.home_score_et}:{item.away_score_et}
+                            ET {item.home_score_et}-{item.away_score_et}
                           </span>
                         )}
                         {pkWinner && (
