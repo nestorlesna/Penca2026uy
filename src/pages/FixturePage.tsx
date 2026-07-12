@@ -48,6 +48,8 @@ export function FixturePage() {
     awayTeam: string
     homeTeamId: string | null
     awayTeamId: string | null
+    homeTeamAbbr: string | null
+    awayTeamAbbr: string | null
     homeScore: number | null
     awayScore: number | null
     homeScoreEt: number | null
@@ -93,6 +95,8 @@ export function FixturePage() {
       awayTeam: match.away_team?.name ?? match.away_slot_label ?? '?',
       homeTeamId: match.home_team?.id ?? null,
       awayTeamId: match.away_team?.id ?? null,
+      homeTeamAbbr: match.home_team?.abbreviation ?? null,
+      awayTeamAbbr: match.away_team?.abbreviation ?? null,
       homeScore: match.home_score_90,
       awayScore: match.away_score_90,
       homeScoreEt: match.home_score_et,
@@ -261,6 +265,8 @@ export function FixturePage() {
           awayTeam={selectedMatch.awayTeam}
           homeTeamId={selectedMatch.homeTeamId}
           awayTeamId={selectedMatch.awayTeamId}
+          homeTeamAbbr={selectedMatch.homeTeamAbbr}
+          awayTeamAbbr={selectedMatch.awayTeamAbbr}
           homeScore={selectedMatch.homeScore}
           awayScore={selectedMatch.awayScore}
           homeScoreEt={selectedMatch.homeScoreEt}

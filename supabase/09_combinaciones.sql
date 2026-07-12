@@ -617,6 +617,7 @@ BEGIN
 
     ELSIF v_rule.rule_type = 'match_loser' THEN
       SELECT CASE
+        WHEN winner_team_id IS NULL THEN NULL      -- semi sin jugar: perdedor aún desconocido
         WHEN winner_team_id = home_team_id THEN away_team_id
         ELSE home_team_id
       END INTO v_team_id

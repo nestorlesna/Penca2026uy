@@ -9,6 +9,8 @@ interface Props {
   awayTeam: string
   homeTeamId?: string | null
   awayTeamId?: string | null
+  homeTeamAbbr?: string | null
+  awayTeamAbbr?: string | null
   homeScore: number | null
   awayScore: number | null
   homeScoreEt?: number | null
@@ -28,6 +30,8 @@ export function PredictionsSummaryModal({
   awayTeam,
   homeTeamId,
   awayTeamId,
+  homeTeamAbbr,
+  awayTeamAbbr,
   homeScore,
   awayScore,
   homeScoreEt,
@@ -56,8 +60,16 @@ export function PredictionsSummaryModal({
     return null
   }
 
-  // Plantilla de columnas del Top 10: Nombre · Resultado · ET · Pen · Pts
-  const topGrid = 'grid grid-cols-[1fr_2.5rem_3.5rem_4.75rem_2.75rem] items-center gap-1.5'
+  // Abreviación del ganador por penales apostado (ej. "NOR")
+  const pkWinnerAbbr = (id: string | null): string | null => {
+    if (!id) return null
+    if (id === homeTeamId) return homeTeamAbbr ?? homeTeam
+    if (id === awayTeamId) return awayTeamAbbr ?? awayTeam
+    return null
+  }
+
+  // Columnas de la 2da línea del Top 10: Resultado · ET · Pen · Pts
+  const topGrid = 'grid grid-cols-[3rem_3rem_1fr_3rem] items-center gap-2'
 
   return (
     <Modal open={open} onClose={onClose} title="Predicciones" size="md">
@@ -188,26 +200,17 @@ export function PredictionsSummaryModal({
               <Trophy size={14} className="text-accent" />
               Apuestas del Top 10
             </h3>
-            {/* Cabecera de columnas */}
-            <div className={`${topGrid} px-2 text-[9px] uppercase tracking-wide text-text-muted`}>
-              <span>Nombre</span>
-              <span className="text-center">Res.</span>
-              <span className="text-center">ET</span>
-              <span className="text-center">Pen</span>
-              <span className="text-right">Pts</span>
-            </div>
-
-            <div className={`space-y-1.5 overflow-y-auto pr-1 -mr-1 ${resultLoaded ? 'max-h-[22vh]' : 'max-h-[50vh]'}`}>
+            <div className={`space-y-1.5 overflow-y-auto pr-1 -mr-1 ${resultLoaded ? 'max-h-[26vh]' : 'max-h-[50vh]'}`}>
               {topPredictions.map((p) => {
                 const hasEt = p.home_score_et != null && p.away_score_et != null
-                const pkWinner = pkWinnerLabel(p.predicted_pk_winner_id)
+                const pkWinner = pkWinnerAbbr(p.predicted_pk_winner_id)
                 return (
                   <div
                     key={p.user_id}
-                    className={`${topGrid} rounded-lg bg-surface-2 border border-border p-2`}
+                    className="rounded-lg bg-surface-2 border border-border p-2 space-y-1.5"
                   >
-                    {/* Nombre (avatar + nombre) */}
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    {/* 1ra línea: avatar + nombre completo */}
+                    <div className="flex items-center gap-1.5">
                       {p.avatar_url ? (
                         <img src={p.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                       ) : (
@@ -217,41 +220,44 @@ export function PredictionsSummaryModal({
                           </span>
                         </div>
                       )}
-                      <span className="min-w-0 text-sm text-text-primary truncate">
+                      <span className="text-sm text-text-primary break-words">
                         {p.display_name}
                       </span>
                     </div>
 
-                    {/* Resultado */}
-                    <span className="text-sm font-bold text-text-primary tabular-nums text-center">
-                      {p.home_score}-{p.away_score}
-                    </span>
+                    {/* 2da línea: Resultado · ET · Pen · Pts */}
+                    <div className={topGrid}>
+                      {/* Resultado */}
+                      <span className="text-sm font-bold text-text-primary tabular-nums">
+                        {p.home_score}-{p.away_score}
+                      </span>
 
-                    {/* ET */}
-                    <div className="flex justify-center">
-                      {hasEt && (
-                        <span className="badge bg-accent/20 text-accent text-[10px] font-semibold tabular-nums">
-                          ET {p.home_score_et}-{p.away_score_et}
-                        </span>
-                      )}
-                    </div>
+                      {/* ET */}
+                      <div className="flex justify-start">
+                        {hasEt && (
+                          <span className="badge bg-accent/20 text-accent text-[10px] font-semibold tabular-nums">
+                            {p.home_score_et}-{p.away_score_et}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Penales */}
-                    <div className="flex justify-center min-w-0">
-                      {pkWinner && (
-                        <span className="badge bg-surface border border-border text-text-secondary text-[10px] font-medium truncate max-w-full">
-                          Pen: {pkWinner}
-                        </span>
-                      )}
-                    </div>
+                      {/* Penales */}
+                      <div className="flex justify-start min-w-0">
+                        {pkWinner && (
+                          <span className="badge bg-surface border border-border text-text-secondary text-[10px] font-medium truncate max-w-full">
+                            {pkWinner}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Puntos */}
-                    <div className="flex justify-end">
-                      {resultLoaded && (p.points_earned ?? 0) > 0 && (
-                        <span className="badge-primary text-[10px] font-semibold">
-                          +{p.points_earned}p
-                        </span>
-                      )}
+                      {/* Puntos */}
+                      <div className="flex justify-end">
+                        {resultLoaded && (p.points_earned ?? 0) > 0 && (
+                          <span className="badge-primary text-[10px] font-semibold">
+                            +{p.points_earned}p
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )

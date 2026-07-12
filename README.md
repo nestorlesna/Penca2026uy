@@ -91,6 +91,12 @@ supabase/10_recalculate_all.sql  # Función de recálculo global
 supabase/11_loader_role.sql      # Rol de cargador de resultados
 supabase/12_subgrupos.sql        # Tablas, RLS, funciones y vistas de subgrupos
 supabase/13_admin_functions.sql  # Funciones auxiliares para el panel de admin
+supabase/14_security_fixes.sql   # Hardening RLS: anti-escalada is_loader + lock server-side de bonus
+supabase/15_security_fixes_2.sql # profiles read solo autenticados, subgrupos privados, WITH CHECK explícito
+supabase/16_rpc_authorization.sql# Guard de rol en RPCs SECURITY DEFINER (forma autoritativa)
+supabase/17_rpc_revoke.sql       # REVOKE EXECUTE a anon/public en RPCs mutadoras (defensa en profundidad)
+supabase/18_bonus_points_read.sql# Política de lectura de bonus_points
+supabase/19_fix_match_loser.sql  # Fix: populate no pre-llena el 3er puesto (M103) con una semi sin jugar
 supabase/00_reset_init.sql       # Carga datos del torneo (grupos, equipos, partidos, etc.)
 ```
 
@@ -152,7 +158,7 @@ Admin carga resultado (Admin → Resultados)
   └─ setMatchResult()              → actualiza scores + status='finished' en BD
        └─ trigger auto_set_match_winner  → calcula winner_team_id automáticamente
   └─ calculateMatchPoints()        → RPC: calcula puntos de todas las predicciones del partido
-  └─ populate_knockout_matches()   → RPC: propaga ganadores al cuadro eliminatorio (idempotente)
+  └─ populate_knockout_matches()   → RPC: propaga ganadores (y perdedores al 3er puesto, M103) al cuadro (idempotente; solo escribe, nunca borra un slot)
   └─ calculate_bonus_points()      → RPC: recalcula +Puntos si se cumplen condiciones (idempotente)
   └─ enqueueMatchResultEmails()    → encola 1 correo por cada usuario activo en email_queue
                                      (omite usuarios que ya tienen correo para ese partido)
@@ -303,7 +309,13 @@ supabase/
 ├── 10_recalculate_all.sql     # recalculate_all() — recálculo global idempotente
 ├── 11_loader_role.sql         # Rol de cargador de resultados
 ├── 12_subgrupos.sql           # subgrupos, subgrupo_members, RLS, RPC, triggers, vistas
-└── 13_admin_functions.sql     # admin_get_user_details(), admin_get_match_predictions(), etc.
+├── 13_admin_functions.sql     # admin_get_user_details(), admin_get_match_predictions(), etc.
+├── 14_security_fixes.sql      # Hardening RLS: anti-escalada is_loader + lock server-side de bonus
+├── 15_security_fixes_2.sql    # profiles read solo autenticados, subgrupos privados, WITH CHECK explícito
+├── 16_rpc_authorization.sql   # Guard de rol en RPCs SECURITY DEFINER (forma autoritativa de esas funciones)
+├── 17_rpc_revoke.sql          # REVOKE EXECUTE a anon/public en RPCs mutadoras (defensa en profundidad)
+├── 18_bonus_points_read.sql   # Política de lectura de bonus_points
+└── 19_fix_match_loser.sql     # Fix: populate_knockout_matches() no pre-llena M103 con una semi sin jugar
 ```
 
 ---
