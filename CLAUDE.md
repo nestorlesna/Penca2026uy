@@ -197,6 +197,8 @@ export const supabase = createClient(
 15_security_fixes_2.sql # profiles auth-only read, private subgrupos (member-only), explicit WITH CHECK
 16_rpc_authorization.sql # role guard on SECURITY DEFINER RPCs (admin/loader for result flow; admin-only for group preds). Authoritative final form of those 5 functions.
 17_rpc_revoke.sql        # defense-in-depth: REVOKE EXECUTE from anon/public on mutating RPCs (Capa 1, complements the internal guard in 16)
+18_bonus_points_read.sql # bonus_points read policy
+19_fix_match_loser.sql   # fix: populate_knockout_matches() no longer pre-fills 3rd-place match (M103) with the home team of an unplayed semi (NULL winner → loser stays unresolved)
 ```
 
 Standalone (run after their dependencies): `08_email_queue.sql`, `08b_group_predictions_rpc.sql`, `08c_match_predictions_rpc.sql`.
@@ -224,7 +226,7 @@ Right half (feeds SF M102 → Final M104):
 - R32: M76,M78,M79,M80 → R16: M91,M92 → QF: M99
 - R32: M85,M86,M87,M88 → R16: M95,M96 → QF: M100
 
-Third place: M103 (losers of M101 and M102). Final: M104.
+Third place: M103 — home = loser of M101, away = loser of M102. Final: M104 — home = winner of M101, away = winner of M102.
 
 ### Score calculation flow
 
@@ -237,6 +239,10 @@ Third place: M103 (losers of M101 and M102). Final: M104.
 ### Known gotcha: PostgREST reserved word `order`
 
 The `phases` table has a column named `order` which conflicts with PostgREST's `order` query parameter. Never use `.eq('order', value)` — it will be interpreted as ORDER BY instead of a WHERE filter. Workaround (already implemented in `matchService.ts`): fetch all phases and filter client-side.
+
+### Known gotcha: `populate_knockout_matches()` only writes, never clears
+
+`populate_knockout_matches()` (authoritative form in `16_rpc_authorization.sql`, re-run by `recalculate_all()`) only assigns a knockout slot when it can resolve a team (`IF v_team_id IS NOT NULL`). It **never sets a slot back to NULL**. Consequence: if a slot was written with a wrong team, re-running the function will *not* clear it — you must NULL it manually first, then recalculate. The `match_loser` branch returns NULL when the source match has no `winner_team_id` yet (fixed in `19_fix_match_loser.sql`), so an unplayed semifinal no longer pre-fills M103 with its home team.
 
 ### Bonus predictions locking
 
